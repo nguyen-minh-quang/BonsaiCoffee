@@ -50,7 +50,7 @@
 
         .divider {
             border: none;
-            border-top: 1px dashed #000;
+            border-top: 1px solid #000;
             margin: 6px 0;
         }
 
@@ -65,7 +65,7 @@
             font-weight: bold;
             text-align: left;
             padding: 3px 0;
-            border-bottom: 1px dashed #000;
+            border-bottom: 1px solid #000;
         }
 
         table td {
@@ -129,8 +129,12 @@
         <div class="info-row"><span>Ca số:</span><span class="bold">#{{ shift.id }}</span></div>
         <div class="info-row"><span>Bắt đầu lúc:</span><span>{{ shift.start_time|vntime('%H:%M %d/%m') if
                 shift.start_time else '--' }}</span></div>
+        {% if shift.status == 'closed' %}
         <div class="info-row"><span>Kết thúc lúc:</span><span>{{ shift.end_time|vntime('%H:%M %d/%m') if shift.end_time
                 else '--' }}</span></div>
+        {% else %}
+        <div class="info-row"><span>Giờ in:</span><span>{{ now|vntime('%H:%M %d/%m') }}</span></div>
+        {% endif %}
         <div class="info-row"><span>Nhân viên:</span><span>{{ shift.user.full_name if shift.user else '--' }}</span>
         </div>
     </div>
@@ -148,7 +152,7 @@
         <div class="info-row"><span>Chi ngoài (-):</span><span>{{ '{:,.0f}'.format(total_expense).replace(',', '.')
                 }}đ</span></div>
         <hr class="divider">
-        <div class="info-row large" style="margin: 8px 0; font-size: 16px;"><span>TỔNG QUỸ:</span><span>{{
+        <div class="info-row large" style="margin: 8px 0; font-size: 16px;"><span>TIỀN CUỐI CA:</span><span>{{
                 '{:,.0f}'.format(balance).replace(',', '.') }}đ</span></div>
     </div>
 
@@ -200,7 +204,11 @@
             }, 300);
         });
         window.onafterprint = function () {
+            {% if request.args.get('auto_close') == '1' %}
+            window.location.href = "{{ url_for('cashier.index') }}";
+            {% else %}
             window.close();
+            {% endif %}
         };
     </script>
 </body>

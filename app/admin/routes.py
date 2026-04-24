@@ -165,7 +165,7 @@ def category_toggle(id):
 def products():
     """Danh sách sản phẩm, có filter theo danh mục."""
     category_id = request.args.get('category_id', type=int)
-    query = Product.query.filter_by(is_available=True)
+    query = Product.query
 
     if category_id:
         query = query.filter_by(category_id=category_id)
@@ -253,11 +253,18 @@ def product_update(id):
 @admin_bp.route('/products/<int:id>/delete', methods=['POST'])
 @admin_required
 def product_delete(id):
-    """Xóa mềm sản phẩm."""
+    """Xóa cứng sản phẩm nếu chưa phát sinh đơn hàng."""
+    from sqlalchemy.exc import IntegrityError
     product = Product.query.get_or_404(id)
-    product.is_available = False
-    db.session.commit()
-    flash('Đã xóa sản phẩm.', 'success')
+    
+    try:
+        db.session.delete(product)
+        db.session.commit()
+        flash('Đã xóa vĩnh viễn sản phẩm.', 'success')
+    except IntegrityError:
+        db.session.rollback()
+        flash('LỖI: Món này đã từng được khách đặt! Để không làm sai lệch báo cáo doanh thu cũ, bạn không thể xóa vĩnh viễn món này. Hãy gạt công tắc sang trạng thái "Hết hàng" để ẩn món này thay vì xóa!', 'error')
+        
     return redirect(url_for('admin.products'))
 
 
@@ -567,7 +574,7 @@ def reports():
         db.func.date(Order.created_at) >= start_date,
         db.func.date(Order.created_at) <= end_date,
         Order.status == 'completed',
-    ).all()
+    ).order_by(Order.paid_at.desc()).all()
 
     total_revenue = sum(o.total_amount for o in orders)
     total_orders = len(orders)

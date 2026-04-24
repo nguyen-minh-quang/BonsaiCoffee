@@ -116,7 +116,7 @@ def shift_close():
     shift.end_time = datetime.now(timezone.utc)
     shift.status = "closed"
     db.session.commit()
-    return redirect(url_for("cashier.index"))
+    return redirect(url_for("cashier.shift_report", shift_id=shift.id, print=1, auto_close=1))
 
 
 # ---------------------------------------------------------------------------
@@ -720,12 +720,18 @@ def api_transaction_create():
 # ---------------------------------------------------------------------------
 # Trang bao cao ca
 # ---------------------------------------------------------------------------
-@cashier_bp.route("/shift-report")
+@cashier_bp.route("/shift-report", defaults={"shift_id": None})
+@cashier_bp.route("/shift-report/<int:shift_id>")
 @cashier_required
-def shift_report():
-    shift = _get_open_shift()
-    if shift is None:
-        return redirect(url_for("cashier.index"))
+def shift_report(shift_id):
+    if shift_id:
+        shift = db.session.get(Shift, shift_id)
+        if not shift:
+            return redirect(url_for("cashier.index"))
+    else:
+        shift = _get_open_shift()
+        if shift is None:
+            return redirect(url_for("cashier.index"))
 
     completed_orders = (
         Order.query.filter_by(shift_id=shift.id, status="completed")
