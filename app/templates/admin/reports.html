@@ -1,0 +1,197 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold" style="font-family: 'Playfair Display', serif; color: #2D5F2D;">
+            Báo cáo thống kê
+        </h1>
+        <p class="mt-1 text-sm" style="color: #8B4513;">Thống kê doanh thu, thu chi theo khoảng thời gian</p>
+    </div>
+
+    <!-- Filter -->
+    <div class="bg-white rounded-lg border p-4" style="border-color: #E5E2D9;">
+        <form method="GET" action="/admin/reports" class="flex items-end gap-4 flex-wrap">
+            <div>
+                <label class="block text-sm font-medium mb-1" style="color: #2D5F2D;">Từ ngày</label>
+                <input type="date" name="start_date" value="{{ start_date }}"
+                    class="px-3 py-2 rounded-lg border text-sm outline-none"
+                    style="border-color: #E5E2D9; color: #2D5F2D;">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1" style="color: #2D5F2D;">Đến ngày</label>
+                <input type="date" name="end_date" value="{{ end_date }}"
+                    class="px-3 py-2 rounded-lg border text-sm outline-none"
+                    style="border-color: #E5E2D9; color: #2D5F2D;">
+            </div>
+            <button type="submit"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+                style="background-color: #2D5F2D;"
+                onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                <i data-lucide="filter" class="w-4 h-4"></i>
+                Lọc
+            </button>
+        </form>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <!-- Tổng doanh thu -->
+        <div class="bg-white rounded-lg p-5 border" style="border-color: #E5E2D9;">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background-color: rgba(45,95,45,0.1);">
+                    <i data-lucide="banknote" class="w-6 h-6" style="color: #2D5F2D;"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold" style="color: #2D5F2D;">
+                        {{ "{:,.0f}".format(total_revenue).replace(",", ".") }}đ
+                    </p>
+                    <p class="text-sm" style="color: #8B4513;">Tổng doanh thu</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng thu ngoài -->
+        <div class="bg-white rounded-lg p-5 border" style="border-color: #E5E2D9;">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background-color: rgba(34,197,94,0.1);">
+                    <i data-lucide="trending-up" class="w-6 h-6 text-green-600"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold text-green-700">
+                        +{{ "{:,.0f}".format(total_income).replace(",", ".") }}đ
+                    </p>
+                    <p class="text-sm" style="color: #8B4513;">Tổng thu ngoài</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tổng chi ngoài -->
+        <div class="bg-white rounded-lg p-5 border" style="border-color: #E5E2D9;">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background-color: rgba(239,68,68,0.1);">
+                    <i data-lucide="trending-down" class="w-6 h-6 text-red-500"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold text-red-600">
+                        -{{ "{:,.0f}".format(total_expense).replace(",", ".") }}đ
+                    </p>
+                    <p class="text-sm" style="color: #8B4513;">Tổng chi ngoài</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng đơn hàng -->
+    <div>
+        <h2 class="text-lg font-bold mb-3" style="font-family: 'Playfair Display', serif; color: #2D5F2D;">
+            Đơn hàng
+        </h2>
+        <div class="bg-white rounded-lg border overflow-hidden" style="border-color: #E5E2D9;">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr style="background-color: #FAFAF5; border-bottom: 1px solid #E5E2D9;">
+                            <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Mã đơn</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Bàn</th>
+                            <th class="px-4 py-3 text-right font-semibold" style="color: #2D5F2D;">Tổng tiền</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">PTTT</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Thời gian</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr class="border-b transition-colors hover:bg-gray-50"
+                            style="border-color: #E5E2D9; {% if loop.index is odd %}background-color: #fff;{% else %}background-color: #FAFAF5;{% endif %}">
+                            <td class="px-4 py-3 font-medium" style="color: #2D5F2D;">#{{ order.id }}</td>
+                            <td class="px-4 py-3" style="color: #8B4513;">{{ order.table.name if order.table else '—' }}</td>
+                            <td class="px-4 py-3 text-right font-medium" style="color: #2D5F2D;">
+                                {{ "{:,.0f}".format(order.total_amount).replace(",", ".") }}đ
+                            </td>
+                            <td class="px-4 py-3" style="color: #8B4513;">
+                                {% if order.payment_method == 'cash' %}Tiền mặt
+                                {% elif order.payment_method == 'transfer' %}Chuyển khoản
+                                {% else %}{{ order.payment_method }}{% endif %}
+                            </td>
+                            <td class="px-4 py-3" style="color: #8B4513;">
+                                {{ order.created_at|vntime('%d/%m/%Y %H:%M') if order.created_at else '—' }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not orders %}
+                        <tr>
+                            <td colspan="5" class="px-4 py-8 text-center" style="color: #8B4513;">
+                                Không có đơn hàng nào trong khoảng thời gian này.
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bảng thu/chi -->
+    <div>
+        <h2 class="text-lg font-bold mb-3" style="font-family: 'Playfair Display', serif; color: #2D5F2D;">
+            Thu / Chi ngoài
+        </h2>
+        <div class="bg-white rounded-lg border overflow-hidden" style="border-color: #E5E2D9;">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr style="background-color: #FAFAF5; border-bottom: 1px solid #E5E2D9;">
+                            <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D; width: 100px;">Loại</th>
+                            <th class="px-4 py-3 text-right font-semibold" style="color: #2D5F2D; width: 140px;">Số tiền</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Mô tả</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Người tạo</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Thời gian</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for txn in transactions %}
+                        <tr class="border-b transition-colors hover:bg-gray-50"
+                            style="border-color: #E5E2D9; {% if loop.index is odd %}background-color: #fff;{% else %}background-color: #FAFAF5;{% endif %}">
+                            <td class="px-4 py-3">
+                                {% if txn.type == 'income' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Thu
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    Chi
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-right font-medium"
+                                style="color: {{ '#16a34a' if txn.type == 'income' else '#dc2626' }};">
+                                {{ "+" if txn.type == 'income' else "-" }}{{ "{:,.0f}".format(txn.amount).replace(",", ".") }}đ
+                            </td>
+                            <td class="px-4 py-3" style="color: #8B4513;">{{ txn.description or '—' }}</td>
+                            <td class="px-4 py-3" style="color: #8B4513;">{{ txn.created_by.full_name if txn.created_by else '—' }}</td>
+                            <td class="px-4 py-3" style="color: #8B4513;">
+                                {{ txn.created_at|vntime('%d/%m/%Y %H:%M') if txn.created_at else '—' }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not transactions %}
+                        <tr>
+                            <td colspan="5" class="px-4 py-8 text-center" style="color: #8B4513;">
+                                Không có giao dịch thu/chi nào trong khoảng thời gian này.
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+</script>
+{% endblock %}

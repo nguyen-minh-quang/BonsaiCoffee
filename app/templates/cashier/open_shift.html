@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Mở ca làm việc{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-cream flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- Card -->
+        <div class="bg-surface border border-border rounded-2xl p-8 animate-fade-in">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="clock" class="w-8 h-8 text-primary"></i>
+                </div>
+                <h1 class="font-display text-2xl font-bold text-gray-900">Mở ca làm việc</h1>
+                <p class="text-sm text-muted mt-1">Nhập số tiền đầu ca để bắt đầu</p>
+            </div>
+
+            <!-- Info -->
+            <div class="bg-cream rounded-xl p-4 mb-6 space-y-2">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-muted">Nhân viên</span>
+                    <span class="font-medium text-gray-800">{{ current_user.full_name if current_user else 'Thu ngân' }}</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-muted">Ngày giờ</span>
+                    <span class="font-medium text-gray-800" id="current-datetime"></span>
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form method="POST" action="{{ url_for('cashier.shift_open') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+                <div class="mb-6">
+                    <label for="starting_cash" class="block text-sm font-medium text-gray-700 mb-2">
+                        Số tiền đầu ca (VND)
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i data-lucide="banknote" class="w-5 h-5 text-muted"></i>
+                        </div>
+                        <input type="number"
+                               id="starting_cash"
+                               name="starting_cash"
+                               min="0"
+                               step="1000"
+                               placeholder="0"
+                               required
+                               class="w-full pl-12 pr-16 py-3 text-lg font-medium bg-cream border border-border rounded-xl
+                                      focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary
+                                      placeholder:text-muted/50"
+                               oninput="formatPreview(this.value)">
+                        <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                            <span class="text-sm text-muted font-medium">VND</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-muted mt-2" id="cash-preview"></p>
+                </div>
+
+                <button type="submit"
+                        class="w-full brew-btn-primary justify-center py-3 text-base rounded-xl">
+                    <i data-lucide="play" class="w-5 h-5"></i>
+                    Mở ca
+                </button>
+            </form>
+        </div>
+
+        <!-- Back link -->
+        <div class="text-center mt-4">
+            <a href="{{ url_for('auth.logout') }}" class="text-sm text-muted hover:text-primary transition-colors">
+                <i data-lucide="arrow-left" class="w-4 h-4 inline"></i>
+                Đăng xuất
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    function updateDateTime() {
+        const now = new Date();
+        const options = {
+            weekday: 'long', year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+        };
+        document.getElementById('current-datetime').textContent = now.toLocaleString('vi-VN', options);
+    }
+
+    function formatPreview(value) {
+        const el = document.getElementById('cash-preview');
+        if (value && parseInt(value) > 0) {
+            el.textContent = new Intl.NumberFormat('vi-VN').format(parseInt(value)) + 'đ';
+        } else {
+            el.textContent = '';
+        }
+    }
+
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+</script>
+{% endblock %}

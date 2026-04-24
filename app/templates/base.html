@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Bonsai Coffee{% endblock %} — Quản lý quán cà phê</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    primary: '#2D5F2D',
+                    'primary-dark': '#1E3F1E',
+                    secondary: '#8B4513',
+                    'secondary-dark': '#6B340F',
+                    accent: '#D4A574',
+                    'accent-light': '#E8C9A0',
+                    cream: '#FAFAF5',
+                    'cream-dark': '#F0EDE5',
+                    surface: '#FFFFFF',
+                    border: '#E5E2D9',
+                    'border-dark': '#C9C4B8',
+                    muted: '#9B9687',
+                },
+                fontFamily: {
+                    display: ['Playfair Display', 'serif'],
+                    body: ['DM Sans', 'sans-serif'],
+                },
+                animation: {
+                    'fade-in': 'fadeIn 0.4s ease-out',
+                    'slide-in': 'slideIn 0.4s ease-out',
+                    'slide-up': 'slideUp 0.5s ease-out',
+                },
+                keyframes: {
+                    fadeIn: {
+                        '0%': { opacity: '0' },
+                        '100%': { opacity: '1' },
+                    },
+                    slideIn: {
+                        '0%': { opacity: '0', transform: 'translateX(-12px)' },
+                        '100%': { opacity: '1', transform: 'translateX(0)' },
+                    },
+                    slideUp: {
+                        '0%': { opacity: '0', transform: 'translateY(16px)' },
+                        '100%': { opacity: '1', transform: 'translateY(0)' },
+                    },
+                },
+            }
+        }
+    }
+    </script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        /* Base typography */
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: #FAFAF5;
+            color: #2C2C2C;
+        }
+
+        h1, h2, h3, h4, h5, h6,
+        .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FAFAF5;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D4A574;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8B4513;
+        }
+
+        /* Smooth transitions */
+        a, button, input, select, textarea {
+            transition: all 0.2s ease;
+        }
+
+        /* Card hover */
+        .brew-card {
+            background: #FFFFFF;
+            border: 1px solid #E5E2D9;
+            border-radius: 12px;
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+        .brew-card:hover {
+            border-color: #D4A574;
+            transform: translateY(-2px);
+        }
+
+        /* Primary button */
+        .brew-btn-primary {
+            background-color: #2D5F2D;
+            color: #FFFFFF;
+            font-weight: 500;
+            padding: 10px 24px;
+            border-radius: 8px;
+            transition: background-color 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .brew-btn-primary:hover {
+            background-color: #1E3F1E;
+        }
+
+        /* Secondary button */
+        .brew-btn-secondary {
+            background-color: transparent;
+            color: #2D5F2D;
+            font-weight: 500;
+            padding: 10px 24px;
+            border-radius: 8px;
+            border: 1px solid #E5E2D9;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .brew-btn-secondary:hover {
+            border-color: #2D5F2D;
+            background-color: rgba(45, 95, 45, 0.04);
+        }
+
+        /* Flash messages */
+        .flash-message {
+            animation: slideUp 0.4s ease-out;
+        }
+
+        /* Print */
+        @media print {
+            .no-print,
+            nav,
+            aside,
+            .sidebar,
+            .flash-container {
+                display: none !important;
+            }
+            body {
+                background: #FFFFFF;
+                font-size: 12pt;
+            }
+        }
+    </style>
+
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-cream min-h-screen font-body antialiased">
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container fixed top-4 right-4 z-[9999] flex flex-col gap-2 max-w-sm no-print">
+        {% for category, message in messages %}
+        <div class="flash-message flex items-center gap-3 px-4 py-3 rounded-lg border
+            {% if category == 'success' %}
+                bg-green-50 border-green-200 text-green-800
+            {% elif category == 'error' or category == 'danger' %}
+                bg-red-50 border-red-200 text-red-800
+            {% elif category == 'warning' %}
+                bg-amber-50 border-amber-200 text-amber-800
+            {% else %}
+                bg-blue-50 border-blue-200 text-blue-800
+            {% endif %}
+        " role="alert">
+            {% if category == 'success' %}
+            <i data-lucide="check-circle" class="w-5 h-5 flex-shrink-0"></i>
+            {% elif category == 'error' or category == 'danger' %}
+            <i data-lucide="alert-circle" class="w-5 h-5 flex-shrink-0"></i>
+            {% elif category == 'warning' %}
+            <i data-lucide="alert-triangle" class="w-5 h-5 flex-shrink-0"></i>
+            {% else %}
+            <i data-lucide="info" class="w-5 h-5 flex-shrink-0"></i>
+            {% endif %}
+            <span class="text-sm font-medium flex-1">{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="flex-shrink-0 opacity-60 hover:opacity-100 transition-opacity">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {% block body %}
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    {% endblock %}
+
+    <!-- Lucide Icons Init -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            lucide.createIcons();
+
+            // Auto-dismiss flash messages sau 3 giay
+            setTimeout(function() {
+                document.querySelectorAll('.flash-message').forEach(function(el) {
+                    el.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateX(20px)';
+                    setTimeout(function() { el.remove(); }, 300);
+                });
+            }, 3000);
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

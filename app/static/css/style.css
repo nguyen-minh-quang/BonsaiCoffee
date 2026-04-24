@@ -1,0 +1,557 @@
+/* ============================================
+   BrewManager — Custom Styles
+   ============================================ */
+
+/* ---------- CSS Variables ---------- */
+:root {
+    --color-primary: #2D5F2D;
+    --color-primary-dark: #1E3F1E;
+    --color-secondary: #8B4513;
+    --color-secondary-dark: #6B340F;
+    --color-accent: #D4A574;
+    --color-accent-light: #E8C9A0;
+    --color-cream: #FAFAF5;
+    --color-cream-dark: #F0EDE5;
+    --color-surface: #FFFFFF;
+    --color-border: #E5E2D9;
+    --color-border-dark: #C9C4B8;
+    --color-muted: #9B9687;
+    --color-text: #2C2C2C;
+    --color-text-light: #6B6B6B;
+
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+}
+
+/* ---------- Scrollbar ---------- */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--color-cream);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--color-accent);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--color-secondary);
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-accent) var(--color-cream);
+}
+
+/* ---------- Animations ---------- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.4s ease-out;
+}
+
+.animate-slide-in {
+    animation: slideIn 0.4s ease-out;
+}
+
+.animate-slide-up {
+    animation: slideUp 0.5s ease-out;
+}
+
+.animate-slide-down {
+    animation: slideDown 0.3s ease-out;
+}
+
+.animate-scale-in {
+    animation: scaleIn 0.3s ease-out;
+}
+
+/* ---------- Table Styles ---------- */
+.brew-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.brew-table thead th {
+    background-color: var(--color-cream);
+    color: var(--color-muted);
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.brew-table thead th:first-child {
+    border-radius: var(--radius-md) 0 0 0;
+}
+
+.brew-table thead th:last-child {
+    border-radius: 0 var(--radius-md) 0 0;
+}
+
+.brew-table tbody td {
+    padding: 14px 16px;
+    font-size: 14px;
+    color: var(--color-text);
+    border-bottom: 1px solid var(--color-border);
+    vertical-align: middle;
+}
+
+/* Zebra striping */
+.brew-table tbody tr:nth-child(even) {
+    background-color: var(--color-cream);
+}
+
+.brew-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.brew-table tbody tr:hover {
+    background-color: var(--color-cream-dark);
+}
+
+/* ---------- Modal ---------- */
+.brew-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.brew-modal {
+    background: var(--color-surface);
+    border-radius: var(--radius-xl);
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    z-index: 9999;
+    animation: scaleIn 0.25s ease-out;
+}
+
+.brew-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.brew-modal-header h3 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.brew-modal-body {
+    padding: 24px;
+}
+
+.brew-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--color-border);
+}
+
+/* ---------- Toast Notifications ---------- */
+.brew-toast-container {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 380px;
+}
+
+.brew-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    font-size: 14px;
+    color: var(--color-text);
+    animation: slideDown 0.3s ease-out;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.brew-toast.toast-success {
+    border-left: 3px solid #22c55e;
+}
+
+.brew-toast.toast-error {
+    border-left: 3px solid #ef4444;
+}
+
+.brew-toast.toast-warning {
+    border-left: 3px solid #f59e0b;
+}
+
+.brew-toast.toast-info {
+    border-left: 3px solid #3b82f6;
+}
+
+.brew-toast.is-leaving {
+    opacity: 0;
+    transform: translateX(20px);
+}
+
+/* ---------- Form Elements ---------- */
+.brew-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    background: var(--color-cream);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--color-text);
+    transition: border-color 0.2s ease;
+    outline: none;
+}
+
+.brew-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(45, 95, 45, 0.08);
+}
+
+.brew-input::placeholder {
+    color: var(--color-muted);
+}
+
+.brew-select {
+    width: 100%;
+    height: 44px;
+    padding: 0 14px;
+    background: var(--color-cream);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--color-text);
+    transition: border-color 0.2s ease;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%239B9687' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 6l3.5 3.5L11.5 6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+.brew-select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(45, 95, 45, 0.08);
+}
+
+.brew-textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 12px 14px;
+    background: var(--color-cream);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: 14px;
+    color: var(--color-text);
+    transition: border-color 0.2s ease;
+    outline: none;
+    resize: vertical;
+}
+
+.brew-textarea:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(45, 95, 45, 0.08);
+}
+
+.brew-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text);
+    margin-bottom: 6px;
+}
+
+/* ---------- Badge ---------- */
+.brew-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.brew-badge-success {
+    background-color: #dcfce7;
+    color: #166534;
+}
+
+.brew-badge-warning {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.brew-badge-danger {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+.brew-badge-info {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.brew-badge-muted {
+    background-color: var(--color-cream-dark);
+    color: var(--color-muted);
+}
+
+/* ---------- Stat Card ---------- */
+.brew-stat-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    transition: border-color 0.2s ease;
+}
+
+.brew-stat-card:hover {
+    border-color: var(--color-accent);
+}
+
+.brew-stat-card .stat-label {
+    font-size: 13px;
+    color: var(--color-muted);
+    font-weight: 500;
+}
+
+.brew-stat-card .stat-value {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.2;
+    margin-top: 4px;
+}
+
+.brew-stat-card .stat-change {
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 6px;
+}
+
+/* ---------- Empty State ---------- */
+.brew-empty-state {
+    text-align: center;
+    padding: 48px 24px;
+}
+
+.brew-empty-state .empty-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    background-color: var(--color-cream-dark);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-muted);
+}
+
+.brew-empty-state .empty-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 6px;
+}
+
+.brew-empty-state .empty-desc {
+    font-size: 14px;
+    color: var(--color-muted);
+    max-width: 320px;
+    margin: 0 auto;
+}
+
+/* ---------- Print Styles ---------- */
+@media print {
+
+    *,
+    *::before,
+    *::after {
+        background: transparent !important;
+        color: #000 !important;
+        box-shadow: none !important;
+    }
+
+    body {
+        font-size: 12pt;
+        line-height: 1.5;
+    }
+
+    .no-print,
+    .sidebar,
+    nav,
+    aside,
+    header,
+    .flash-container,
+    .brew-toast-container {
+        display: none !important;
+    }
+
+    .brew-table {
+        border: 1px solid #ccc;
+    }
+
+    .brew-table th,
+    .brew-table td {
+        border: 1px solid #ccc;
+        padding: 8px;
+    }
+
+    a[href]::after {
+        content: none;
+    }
+
+    @page {
+        margin: 2cm;
+    }
+}
+
+/* ---------- Utilities ---------- */
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.brew-divider {
+    height: 1px;
+    background: var(--color-border);
+    border: none;
+    margin: 16px 0;
+}
+
+/* Staggered animation for lists */
+.stagger-item:nth-child(1) {
+    animation-delay: 0.0s;
+}
+
+.stagger-item:nth-child(2) {
+    animation-delay: 0.05s;
+}
+
+.stagger-item:nth-child(3) {
+    animation-delay: 0.1s;
+}
+
+.stagger-item:nth-child(4) {
+    animation-delay: 0.15s;
+}
+
+.stagger-item:nth-child(5) {
+    animation-delay: 0.2s;
+}
+
+.stagger-item:nth-child(6) {
+    animation-delay: 0.25s;
+}
+
+.stagger-item:nth-child(7) {
+    animation-delay: 0.3s;
+}
+
+.stagger-item:nth-child(8) {
+    animation-delay: 0.35s;
+}

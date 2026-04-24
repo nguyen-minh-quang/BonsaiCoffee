@@ -1,0 +1,242 @@
+{% extends "cashier/base_cashier.html" %}
+
+{% block title %}Thu/Chi{% endblock %}
+
+{% block content %}
+<div class="p-6 animate-fade-in">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="font-display text-2xl font-bold text-gray-900">Thu/Chi trong ca</h1>
+            <p class="text-sm text-muted mt-0.5">Quản lý các khoản thu chi phát sinh trong ca làm việc</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="openTransactionModal('income')"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors">
+                <i data-lucide="plus" class="w-4 h-4"></i>
+                Thêm khoản thu
+            </button>
+            <button onclick="openTransactionModal('expense')"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors">
+                <i data-lucide="minus" class="w-4 h-4"></i>
+                Thêm khoản chi
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+        <div class="bg-surface border border-border rounded-xl p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                    <i data-lucide="trending-up" class="w-5 h-5 text-green-600"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-muted">Tổng thu</p>
+                    <p class="text-lg font-bold text-green-600" id="total-income">0đ</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface border border-border rounded-xl p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+                    <i data-lucide="trending-down" class="w-5 h-5 text-red-500"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-muted">Tổng chi</p>
+                    <p class="text-lg font-bold text-red-500" id="total-expense">0đ</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface border border-border rounded-xl p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <i data-lucide="wallet" class="w-5 h-5 text-primary"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-muted">Chênh lệch</p>
+                    <p class="text-lg font-bold text-primary" id="total-diff">0đ</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="bg-surface border border-border rounded-xl overflow-hidden">
+        <table class="w-full">
+            <thead>
+                <tr class="bg-cream">
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-muted uppercase tracking-wide">Loại</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-muted uppercase tracking-wide">Số tiền</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-muted uppercase tracking-wide">Mô tả</th>
+                    <th class="text-left px-4 py-3 text-xs font-semibold text-muted uppercase tracking-wide">Thời gian</th>
+                </tr>
+            </thead>
+            <tbody id="transactions-body">
+                <tr>
+                    <td colspan="4" class="text-center py-12 text-sm text-muted">
+                        <i data-lucide="inbox" class="w-10 h-10 text-border mx-auto mb-2"></i>
+                        <p>Chưa có giao dịch nào</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Thêm Thu/Chi -->
+<div class="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-200"
+     id="transaction-modal">
+    <div class="bg-surface rounded-2xl p-6 w-full max-w-md transform translate-y-4 transition-transform duration-200">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-display text-xl font-bold text-gray-900" id="modal-title">Thêm khoản thu</h3>
+            <button onclick="closeTransactionModal()"
+                    class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-gray-800 hover:bg-cream">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form id="transaction-form" onsubmit="submitTransaction(event)">
+            <input type="hidden" id="txn-type" value="income">
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Loại giao dịch</label>
+                <select id="txn-category" class="w-full px-3 py-2.5 text-sm bg-cream border border-border rounded-lg focus:outline-none focus:border-primary">
+                    <option value="other">Khác</option>
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Số tiền (VND)</label>
+                <input type="number" id="txn-amount" min="1000" step="1000" required placeholder="0"
+                       class="w-full px-3 py-2.5 text-sm bg-cream border border-border rounded-lg focus:outline-none focus:border-primary placeholder:text-muted/50">
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Mô tả</label>
+                <textarea id="txn-description" rows="2" required placeholder="Nhập mô tả..."
+                          class="w-full px-3 py-2.5 text-sm bg-cream border border-border rounded-lg focus:outline-none focus:border-primary resize-none placeholder:text-muted/50"></textarea>
+            </div>
+
+            <button type="submit" id="txn-submit-btn"
+                    class="w-full brew-btn-primary justify-center py-3 rounded-xl">
+                <i data-lucide="check" class="w-5 h-5"></i>
+                Xác nhận
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block cashier_scripts %}
+<script>
+(function() {
+    'use strict';
+
+    const fmt = (price) => new Intl.NumberFormat('vi-VN').format(price || 0) + 'đ';
+    let transactions = [];
+
+    async function loadTransactions() {
+        try {
+            const res = await fetch('/cashier/api/transactions');
+            const json = await res.json();
+            transactions = json.data || [];
+            renderTransactions();
+            updateSummary();
+        } catch(e) {
+            console.error(e);
+        }
+    }
+
+    function renderTransactions() {
+        const tbody = document.getElementById('transactions-body');
+        if (transactions.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-12 text-sm text-muted">
+                <div class="flex flex-col items-center"><i data-lucide="inbox" class="w-10 h-10 text-border mb-2"></i><p>Chưa có giao dịch nào</p></div>
+            </td></tr>`;
+            lucide.createIcons();
+            return;
+        }
+
+        tbody.innerHTML = transactions.map(t => {
+            const isIncome = t.type === 'income';
+            return `<tr class="border-t border-border hover:bg-cream/50 transition-colors">
+                <td class="px-4 py-3">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
+                        ${isIncome ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}">
+                        <i data-lucide="${isIncome ? 'arrow-down-left' : 'arrow-up-right'}" class="w-3 h-3"></i>
+                        ${isIncome ? 'Thu' : 'Chi'}
+                    </span>
+                </td>
+                <td class="px-4 py-3 text-sm font-semibold ${isIncome ? 'text-green-600' : 'text-red-500'}">
+                    ${isIncome ? '+' : '-'}${fmt(t.amount)}
+                </td>
+                <td class="px-4 py-3 text-sm text-gray-700">${t.description}</td>
+                <td class="px-4 py-3 text-sm text-muted">${t.created_at}</td>
+            </tr>`;
+        }).join('');
+        lucide.createIcons();
+    }
+
+    function updateSummary() {
+        const income = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
+        const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
+        document.getElementById('total-income').textContent = fmt(income);
+        document.getElementById('total-expense').textContent = fmt(expense);
+        document.getElementById('total-diff').textContent = fmt(income - expense);
+    }
+
+    window.openTransactionModal = function(type) {
+        document.getElementById('txn-type').value = type;
+        document.getElementById('modal-title').textContent = type === 'income' ? 'Thêm khoản thu' : 'Thêm khoản chi';
+        const btn = document.getElementById('txn-submit-btn');
+        btn.className = type === 'income'
+            ? 'w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-colors'
+            : 'w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-500 hover:bg-red-600 text-white font-medium rounded-xl transition-colors';
+
+        document.getElementById('txn-amount').value = '';
+        document.getElementById('txn-description').value = '';
+
+        const modal = document.getElementById('transaction-modal');
+        modal.style.opacity = '1';
+        modal.style.pointerEvents = 'auto';
+        modal.querySelector('.bg-surface').style.transform = 'translateY(0)';
+    };
+
+    window.closeTransactionModal = function() {
+        const modal = document.getElementById('transaction-modal');
+        modal.style.opacity = '0';
+        modal.style.pointerEvents = 'none';
+    };
+
+    // Close on overlay
+    document.getElementById('transaction-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeTransactionModal();
+    });
+
+    window.submitTransaction = async function(e) {
+        e.preventDefault();
+        const type = document.getElementById('txn-type').value;
+        const amount = parseInt(document.getElementById('txn-amount').value);
+        const description = document.getElementById('txn-description').value.trim();
+
+        if (!amount || amount <= 0 || !description) return;
+
+        try {
+            const res = await fetch('/cashier/api/transaction/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, amount, description })
+            });
+            if (!res.ok) throw new Error('Lỗi');
+            closeTransactionModal();
+            await loadTransactions();
+        } catch(e) {
+            alert('Không thể tạo giao dịch. Vui lòng thử lại.');
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', loadTransactions);
+})();
+</script>
+{% endblock %}

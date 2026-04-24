@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+
+{% block title %}Phục vụ{% endblock %}
+
+{% block head %}
+<style>
+    .waiter-table-card {
+        background: #FFFFFF;
+        border: 1px solid #E5E2D9;
+        border-radius: 12px;
+        padding: 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .waiter-table-card:hover {
+        border-color: #D4A574;
+    }
+
+    .waiter-table-card.occupied {
+        background: #D4A57418;
+        border-color: #D4A574;
+    }
+
+    .waiter-area-tab {
+        padding: 8px 18px;
+        border-radius: 24px;
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: 1px solid #E5E2D9;
+        background: #FFFFFF;
+        color: #9B9687;
+    }
+
+    .waiter-area-tab:hover {
+        border-color: #D4A574;
+        color: #8B4513;
+    }
+
+    .waiter-area-tab.active {
+        background: #2D5F2D;
+        border-color: #2D5F2D;
+        color: #FFFFFF;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-cream">
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-primary no-print" style="height: 56px;">
+        <div class="flex items-center justify-between h-full px-4">
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center">
+                    <i data-lucide="coffee" class="w-4 h-4 text-white"></i>
+                </div>
+                <span class="font-display text-lg font-bold text-white">Bonsai Coffee</span>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">
+                        <span class="text-white text-xs font-semibold">
+                            {{ current_user.full_name[0] if current_user and current_user.full_name else 'N' }}
+                        </span>
+                    </div>
+                    <span class="text-sm text-white/90">
+                        {{ current_user.full_name if current_user else 'Nhân viên' }}
+                    </span>
+                </div>
+                <a href="{{ url_for('auth.logout') }}"
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors">
+                    <i data-lucide="power" class="w-3.5 h-3.5"></i>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Area Tabs -->
+    <div class="px-4 py-3">
+        <div class="flex gap-2 overflow-x-auto" id="area-tabs" style="scrollbar-width: none;"></div>
+    </div>
+
+    <!-- Tables Grid -->
+    <div class="px-4 pb-6">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" id="tables-grid"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    (function () {
+        'use strict';
+
+        let areas = [];
+        let tables = [];
+        let selectedAreaId = null;
+
+        const fmt = (price) => new Intl.NumberFormat('vi-VN').format(price || 0) + 'đ';
+
+        async function loadTables() {
+            try {
+                const res = await fetch('/waiter/api/tables');
+                const json = await res.json();
+                const raw = json.data || [];
+                areas = []; tables = [];
+                raw.forEach(a => {
+                    areas.push({ id: a.area_id, name: a.area_name });
+                    (a.tables || []).forEach(t => {
+                        tables.push({ id: t.id, name: t.name, area_id: a.area_id, occupied: t.status === 'occupied', item_count: t.item_count || 0, total: t.total || 0 });
+                    });
+                });
+                renderAreaTabs();
+                renderTables();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        function renderAreaTabs() {
+            const container = document.getElementById('area-tabs');
+            let html = `<button class="waiter-area-tab ${!selectedAreaId ? 'active' : ''}" onclick="WAITER.selectArea(null)">Tất cả</button>`;
+            areas.forEach(a => {
+                html += `<button class="waiter-area-tab ${selectedAreaId === a.id ? 'active' : ''}" onclick="WAITER.selectArea(${a.id})">${a.name}</button>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderTables() {
+            const container = document.getElementById('tables-grid');
+            const filtered = selectedAreaId ? tables.filter(t => t.area_id === selectedAreaId) : tables;
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<p class="col-span-2 text-center text-sm text-muted py-12">Không có bàn nào</p>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(t => {
+                return `<a href="/waiter/order/${t.id}" class="waiter-table-card ${t.occupied ? 'occupied' : ''}">
+                ${t.occupied
+                        ? `<div class="w-10 h-10 bg-accent/30 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i data-lucide="users" class="w-5 h-5 text-secondary"></i>
+                       </div>`
+                        : `<div class="w-10 h-10 bg-cream rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i data-lucide="armchair" class="w-5 h-5 text-muted"></i>
+                       </div>`
+                    }
+                <p class="text-sm font-semibold ${t.occupied ? 'text-secondary' : 'text-muted'}">${t.name}</p>
+                ${t.occupied
+                        ? `<p class="text-xs text-secondary/70 mt-1">${t.item_count} món - ${fmt(t.total)}</p>`
+                        : `<p class="text-xs text-muted/50 mt-1">Trống</p>`
+                    }
+            </a>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        window.WAITER = {
+            selectArea(areaId) {
+                selectedAreaId = areaId;
+                renderAreaTabs();
+                renderTables();
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', loadTables);
+
+        // Auto-refresh mỗi 15 giây
+        setInterval(loadTables, 15000);
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="flex min-h-screen">
+    <!-- Sidebar -->
+    <aside class="sidebar fixed top-0 left-0 h-screen w-[260px] bg-surface border-r border-border flex flex-col z-40 no-print">
+        <!-- Logo -->
+        <div class="px-6 py-6 border-b border-border">
+            <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                    <i data-lucide="coffee" class="w-5 h-5 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-display text-xl font-bold text-primary leading-tight">Bonsai Coffee</h1>
+                    <p class="text-[11px] text-muted leading-tight">Quản lý quán cà phê</p>
+                </div>
+            </a>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 px-3 py-4 overflow-y-auto">
+            <p class="px-3 mb-2 text-[11px] font-semibold text-muted uppercase tracking-wider">Điều hành</p>
+
+            {% set nav_items = [
+                ('admin.dashboard', 'layout-dashboard', 'Tổng quan'),
+                ('admin.categories', 'tag', 'Danh mục'),
+                ('admin.products', 'coffee', 'Thực đơn'),
+                ('admin.areas', 'map-pin', 'Khu vực'),
+                ('admin.tables', 'armchair', 'Bàn'),
+                ('admin.employees', 'users', 'Nhân viên'),
+                ('admin.reports', 'bar-chart-3', 'Báo cáo'),
+                ('admin.settings', 'settings', 'Cài đặt'),
+            ] %}
+
+            <ul class="space-y-1">
+                {% for endpoint, icon, label in nav_items %}
+                <li>
+                    <a href="{{ url_for(endpoint) }}"
+                       class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                       {% if request.endpoint == endpoint %}
+                           bg-accent/15 text-primary border-l-[3px] border-accent ml-0 pl-[9px]
+                       {% else %}
+                           text-gray-600 hover:bg-cream hover:text-primary border-l-[3px] border-transparent ml-0 pl-[9px]
+                       {% endif %}
+                       ">
+                        <i data-lucide="{{ icon }}" class="w-[18px] h-[18px] flex-shrink-0"></i>
+                        <span>{{ label }}</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </nav>
+
+        <!-- User Info -->
+        <div class="px-4 py-4 border-t border-border">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="user" class="w-4 h-4 text-secondary"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-800 truncate">
+                        {{ current_user.full_name if current_user else 'Quản trị viên' }}
+                    </p>
+                    <p class="text-[11px] text-muted truncate">Quản trị viên</p>
+                </div>
+                <a href="{{ url_for('auth.logout') }}" title="Đăng xuất"
+                   class="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-red-600 hover:bg-red-50 transition-all duration-200">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="flex-1 ml-[260px]">
+        <!-- Top Header Bar -->
+        <header class="sticky top-0 z-30 bg-cream/80 backdrop-blur-sm border-b border-border no-print">
+            <div class="flex items-center justify-between px-8 py-4">
+                <!-- Breadcrumb / Page Title -->
+                <div>
+                    <h2 class="font-display text-2xl font-bold text-gray-900">
+                        {% block page_title %}Tổng quan{% endblock %}
+                    </h2>
+                    <p class="text-sm text-muted mt-0.5">
+                        {% block page_subtitle %}{% endblock %}
+                    </p>
+                </div>
+
+                <!-- Right Actions -->
+                <div class="flex items-center gap-3">
+                    {% block header_actions %}{% endblock %}
+
+                    <div class="flex items-center gap-2 pl-3 border-l border-border">
+                        <div class="w-9 h-9 rounded-full bg-primary flex items-center justify-center">
+                            <span class="text-white text-sm font-semibold">
+                                {{ current_user.full_name[0] if current_user and current_user.full_name else 'A' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <main class="px-8 py-6">
+            <div class="animate-fade-in">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Mobile Sidebar Overlay (hidden by default) -->
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/30 z-30 hidden lg:hidden" onclick="toggleSidebar()"></div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    // Re-init icons cho content moi load
+    document.addEventListener('DOMContentLoaded', function() {
+        lucide.createIcons();
+    });
+
+    // Mobile sidebar toggle
+    function toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+    }
+</script>
+{% endblock %}

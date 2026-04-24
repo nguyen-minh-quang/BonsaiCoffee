@@ -1,0 +1,380 @@
+{% extends "base.html" %}
+
+{% block title %}Order - {{ table.name }}{% endblock %}
+
+{% block head %}
+<style>
+    .waiter-cat-tab {
+        padding: 8px 16px;
+        border-radius: 24px;
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        border: 1px solid #E5E2D9;
+        background: #FFFFFF;
+        color: #9B9687;
+    }
+
+    .waiter-cat-tab:hover {
+        border-color: #D4A574;
+        color: #8B4513;
+    }
+
+    .waiter-cat-tab.active {
+        background: #2D5F2D;
+        border-color: #2D5F2D;
+        color: #FFFFFF;
+    }
+
+    .menu-list-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #F0EDE5;
+    }
+
+    .menu-list-item:last-child {
+        border-bottom: none;
+    }
+
+    .order-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #FFFFFF;
+        border-top: 1px solid #E5E2D9;
+        z-index: 50;
+    }
+
+    .order-panel-summary {
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+    }
+
+    .order-panel-detail {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
+
+    .order-panel-detail.expanded {
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    .qty-btn-w {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        font-weight: 600;
+        border: 1px solid #E5E2D9;
+        background: #FAFAF5;
+        color: #2C2C2C;
+        cursor: pointer;
+    }
+
+    .qty-btn-w:hover {
+        border-color: #2D5F2D;
+        color: #2D5F2D;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="min-h-screen bg-cream pb-32">
+    <!-- Header -->
+    <header class="sticky top-0 z-40 bg-primary no-print" style="height: 56px;">
+        <div class="flex items-center justify-between h-full px-4">
+            <div class="flex items-center gap-3">
+                <a href="{{ url_for('waiter.index') }}"
+                    class="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center text-white hover:bg-white/25 transition-colors">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                </a>
+                <div>
+                    <h1 class="text-white font-display text-base font-bold leading-tight">{{ table.name }}</h1>
+                    <p class="text-white/60 text-xs">{{ table.area.name if table.area else '' }}</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Search -->
+    <div class="px-4 pt-3">
+        <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 text-muted absolute left-3 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="menu-search" placeholder="Tìm món..."
+                class="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-border rounded-xl focus:outline-none focus:border-primary placeholder:text-muted/50">
+        </div>
+    </div>
+
+    <!-- Category Tabs -->
+    <div class="px-4 py-3">
+        <div class="flex gap-2 overflow-x-auto" id="category-tabs" style="scrollbar-width: none;"></div>
+    </div>
+
+    <!-- Menu List -->
+    <div class="px-4" id="menu-list"></div>
+
+    <!-- Bottom Order Panel -->
+    <div class="order-panel" id="order-panel" style="display: none;">
+        <div class="order-panel-summary" onclick="toggleOrderDetail()">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                    <i data-lucide="clipboard-list" class="w-5 h-5 text-white"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-semibold text-gray-800" id="panel-summary-text">0 món - 0đ</p>
+                    <p class="text-xs text-muted">Nhấn để xem chi tiết</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="event.stopPropagation(); WO.goBack()"
+                    class="px-5 py-2.5 text-sm rounded-xl font-medium text-white transition-colors"
+                    style="background: #2D5F2D;">
+                    <i data-lucide="check" class="w-4 h-4 inline -mt-0.5"></i>
+                    Xong
+                </button>
+                <i data-lucide="chevron-up" class="w-5 h-5 text-muted transition-transform" id="panel-chevron"></i>
+            </div>
+        </div>
+        <div class="order-panel-detail" id="order-detail">
+            <div class="px-4 pb-4 border-t border-border">
+                <div id="order-items-list" class="py-2"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    (function () {
+        'use strict';
+
+        const tableId = {{ table.id }};
+    let categories = [], menuItems = [];
+    let currentOrder = null;
+    let selectedCatId = 'all';
+    let panelExpanded = false;
+
+    const fmt = (v) => new Intl.NumberFormat('vi-VN').format(v || 0) + 'đ';
+
+    async function api(url, opts = {}) {
+        const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...opts });
+        const json = await res.json();
+        if (!json.success) { showToast(json.message || 'Lỗi', 'error'); throw new Error(json.message); }
+        return json.data;
+    }
+
+    function showToast(msg, type = 'info') {
+        const cls = { success: 'bg-green-50 border-green-200 text-green-800', error: 'bg-red-50 border-red-200 text-red-800', info: 'bg-blue-50 border-blue-200 text-blue-800' };
+        const div = document.createElement('div');
+        div.className = `fixed top-16 left-1/2 -translate-x-1/2 z-[200] px-4 py-3 rounded-lg border ${cls[type] || cls.info} text-sm font-medium`;
+        div.textContent = msg;
+        document.body.appendChild(div);
+        setTimeout(() => { div.style.opacity = '0'; div.style.transition = 'opacity 0.3s'; setTimeout(() => div.remove(), 300); }, 2000);
+    }
+
+    // ===== MENU =====
+    async function loadMenu() {
+        const data = await api('/waiter/api/menu');
+        const raw = Array.isArray(data) ? data : [];
+        categories = []; menuItems = [];
+        raw.forEach(cat => {
+            categories.push({ id: cat.category_id, name: cat.category_name });
+            (cat.products || []).forEach(p => {
+                menuItems.push({ id: p.id, name: p.name, price: p.price, image_url: p.image_url, category_id: cat.category_id });
+            });
+        });
+        renderCategoryTabs(); renderMenu();
+    }
+
+    function renderCategoryTabs() {
+        const c = document.getElementById('category-tabs');
+        let h = `<button class="waiter-cat-tab active" data-cat="all" onclick="WO.selectCategory('all')">Tất cả</button>`;
+        categories.forEach(cat => { h += `<button class="waiter-cat-tab" data-cat="${cat.id}" onclick="WO.selectCategory(${cat.id})">${cat.name}</button>`; });
+        c.innerHTML = h;
+    }
+
+    function renderMenu() {
+        const c = document.getElementById('menu-list');
+        let items = menuItems;
+        const search = (document.getElementById('menu-search')?.value || '').toLowerCase();
+        if (selectedCatId !== 'all') items = items.filter(i => i.category_id === selectedCatId);
+        if (search) items = items.filter(i => i.name.toLowerCase().includes(search));
+        if (!items.length) { c.innerHTML = '<p class="text-center text-sm text-muted py-12">Không tìm thấy món nào</p>'; return; }
+        c.innerHTML = items.map(item => {
+            const img = item.image_url
+                ? `<img src="${item.image_url}" class="w-12 h-12 rounded-lg object-cover flex-shrink-0">`
+                : `<div class="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0" style="background:#f5f0e8;"><i data-lucide="coffee" class="w-5 h-5" style="color:#D4A574;"></i></div>`;
+            return `<div class="menu-list-item">
+                <div class="flex items-center gap-3 flex-1 min-w-0 mr-3">
+                    ${img}
+                    <div class="min-w-0">
+                        <p class="text-sm font-medium text-gray-800">${item.name}</p>
+                        <p class="text-sm font-semibold text-primary mt-0.5">${fmt(item.price)}</p>
+                    </div>
+                </div>
+                <button onclick="WO.addItem(${item.id})"
+                        class="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors flex-shrink-0">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                </button>
+            </div>`;
+        }).join('');
+        lucide.createIcons();
+    }
+
+    // ===== ORDER =====
+    async function loadOrder() {
+        try {
+            const data = await api(`/waiter/api/order/${tableId}`);
+            if (data && data.items) {
+                currentOrder = {
+                    id: data.order_id,
+                    order_number: data.order_number,
+                    items: data.items.map(i => ({
+                        id: i.id, product_id: i.product_id, name: i.product_name,
+                        qty: i.quantity, price: i.unit_price, note: i.note || ''
+                    }))
+                };
+            } else {
+                currentOrder = null;
+            }
+        } catch {
+            currentOrder = null;
+        }
+        renderOrderPanel();
+    }
+
+    function renderOrderPanel() {
+        const panel = document.getElementById('order-panel');
+        if (!currentOrder || !currentOrder.items.length) { panel.style.display = 'none'; return; }
+        panel.style.display = 'block';
+
+        const totalQty = currentOrder.items.reduce((s, i) => s + i.qty, 0);
+        const totalPrice = currentOrder.items.reduce((s, i) => s + i.price * i.qty, 0);
+        document.getElementById('panel-summary-text').textContent = `${totalQty} món - ${fmt(totalPrice)}`;
+
+        document.getElementById('order-items-list').innerHTML = currentOrder.items.map(item => {
+            const sub = item.price * item.qty;
+            return `<div class="flex items-center gap-3 py-3 border-b border-cream last:border-0">
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-800 truncate">${item.name}</p>
+                    <p class="text-xs text-muted mb-1">${fmt(item.price)}</p>
+                    <input type="text" placeholder="Ghi chú" 
+                           class="w-full px-2 py-1.5 text-xs bg-gray-50 border rounded-md outline-none focus:border-green-700 transition-colors"
+                           style="border-color: #E5E2D9; color: #2D5F2D;"
+                           value="${item.note}" 
+                           onchange="WO.updateNote(${item.id}, this.value)">
+                </div>
+                <div class="flex items-center gap-1">
+                    <button class="qty-btn-w" onclick="WO.updateQty(${item.id}, ${item.qty - 1})">-</button>
+                    <span class="w-8 text-center text-sm font-semibold">${item.qty}</span>
+                    <button class="qty-btn-w" onclick="WO.updateQty(${item.id}, ${item.qty + 1})">+</button>
+                </div>
+                <span class="text-sm font-semibold text-gray-800 w-20 text-right">${fmt(sub)}</span>
+                <button onclick="WO.removeItem(${item.id})" class="w-7 h-7 flex items-center justify-center text-muted hover:text-red-500">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>`;
+        }).join('');
+        lucide.createIcons();
+    }
+
+    // ===== ORDER ACTIONS =====
+    async function addItem(productId) {
+        if (!currentOrder) {
+            try {
+                await api('/waiter/api/order/create', {
+                    method: 'POST',
+                    body: JSON.stringify({ table_id: tableId, items: [{ product_id: productId, quantity: 1 }] })
+                });
+                await loadOrder();
+                showToast('Đã thêm món', 'success');
+            } catch { return; }
+            return;
+        }
+        try {
+            await api(`/waiter/api/order/${currentOrder.id}/add-item`, {
+                method: 'POST', body: JSON.stringify({ product_id: productId, quantity: 1 })
+            });
+            await loadOrder();
+            showToast('Đã thêm món', 'success');
+        } catch { }
+    }
+
+    async function updateQty(itemId, newQty) {
+        if (!currentOrder) return;
+        if (newQty <= 0) { await removeItem(itemId); return; }
+        try {
+            await api(`/waiter/api/order/${currentOrder.id}/update-item/${itemId}`, {
+                method: 'POST', body: JSON.stringify({ quantity: newQty })
+            });
+            await loadOrder();
+        } catch { }
+    }
+
+    async function updateNote(itemId, newNote) {
+        if (!currentOrder) return;
+        try {
+            await api(`/waiter/api/order/${currentOrder.id}/update-item/${itemId}`, {
+                method: 'POST', body: JSON.stringify({ note: newNote })
+            });
+            const it = currentOrder.items.find(i => i.id === itemId);
+            if (it) it.note = newNote;
+        } catch { }
+    }
+
+    async function removeItem(itemId) {
+        if (!currentOrder) return;
+        try {
+            await api(`/waiter/api/order/${currentOrder.id}/remove-item/${itemId}`, { method: 'POST' });
+            await loadOrder();
+        } catch { }
+    }
+
+    // ===== TOGGLE =====
+    window.toggleOrderDetail = function () {
+        const detail = document.getElementById('order-detail');
+        const chevron = document.getElementById('panel-chevron');
+        panelExpanded = !panelExpanded;
+        detail.classList.toggle('expanded', panelExpanded);
+        chevron.style.transform = panelExpanded ? 'rotate(180deg)' : 'rotate(0deg)';
+    };
+
+    // ===== PUBLIC =====
+    window.WO = {
+        selectCategory(catId) {
+            selectedCatId = catId;
+            document.querySelectorAll('.waiter-cat-tab').forEach(t => t.classList.remove('active'));
+            const tgt = document.querySelector(`.waiter-cat-tab[data-cat="${catId}"]`);
+            if (tgt) tgt.classList.add('active');
+            renderMenu();
+        },
+        addItem: addItem,
+        updateQty: updateQty,
+        updateNote: updateNote,
+        removeItem: removeItem,
+        goBack() { window.location.href = '{{ url_for("waiter.index") }}'; },
+    };
+
+    document.getElementById('menu-search').addEventListener('input', () => renderMenu());
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        await Promise.all([loadMenu(), loadOrder()]);
+    });
+}) ();
+</script>
+{% endblock %}

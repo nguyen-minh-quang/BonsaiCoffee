@@ -1,0 +1,251 @@
+{% extends "cashier/base_cashier.html" %}
+
+{% block title %}Báo cáo ca{% endblock %}
+
+{% block content %}
+<div class="p-6 animate-fade-in">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h1 class="font-display text-2xl font-bold text-gray-900">Báo cáo ca làm việc</h1>
+            <p class="text-sm text-muted mt-0.5">
+                Ca #{{ shift.id }} &mdash; Bắt đầu lúc {{ shift.start_time|vntime if shift.start_time else '--' }}
+                &mdash; Nhân viên: {{ shift.user.full_name if shift.user else '--' }}
+            </p>
+        </div>
+        <button onclick="window.open('/cashier/shift-report?print=1', '_blank')"
+                class="flex items-center gap-2 px-4 py-2.5 bg-primary hover:opacity-90 text-white text-sm font-medium rounded-lg transition-colors no-print">
+            <i data-lucide="printer" class="w-4 h-4"></i>
+            In báo cáo
+        </button>
+    </div>
+
+    <!-- Stat Cards - Hàng 1: Tổng quan tài chính -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+        <div class="bg-surface border border-border rounded-xl p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-accent/20 rounded-lg flex items-center justify-center">
+                    <i data-lucide="wallet" class="w-5 h-5 text-secondary"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-muted">Tiền đầu ca</p>
+                    <p class="text-lg font-bold text-secondary">{{ '{:,.0f}'.format(shift.opening_amount).replace(',', '.') }}đ</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface border border-border rounded-xl p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <i data-lucide="receipt" class="w-5 h-5 text-primary"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-muted">Doanh thu bán hàng</p>
+                    <p class="text-lg font-bold text-primary">{{ '{:,.0f}'.format(revenue).replace(',', '.') }}đ</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface border border-border rounded-xl p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                    <i data-lucide="trending-up" class="w-5 h-5 text-green-600"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-muted">Thu ngoài</p>
+                    <p class="text-lg font-bold text-green-600">+{{ '{:,.0f}'.format(total_income).replace(',', '.') }}đ</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface border border-border rounded-xl p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center">
+                    <i data-lucide="trending-down" class="w-5 h-5 text-red-500"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-muted">Chi ngoài</p>
+                    <p class="text-lg font-bold text-red-500">-{{ '{:,.0f}'.format(total_expense).replace(',', '.') }}đ</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat Cards - Hàng 2: Tổng quỹ + Đơn hàng + Phương thức -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+        <div class="bg-primary/5 border-2 border-primary/20 rounded-xl p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                    <i data-lucide="banknote" class="w-5 h-5 text-white"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-muted font-semibold">TỔNG QUỸ</p>
+                    <p class="text-xl font-bold text-primary">{{ '{:,.0f}'.format(balance).replace(',', '.') }}đ</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface border border-border rounded-xl p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <i data-lucide="shopping-bag" class="w-5 h-5 text-blue-600"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-muted">Đơn hoàn thành</p>
+                    <p class="text-lg font-bold text-blue-600">{{ completed_orders|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface border border-border rounded-xl p-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-amber-50 rounded-lg flex items-center justify-center">
+                    <i data-lucide="clock" class="w-5 h-5 text-amber-600"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-muted">Đơn đang chờ</p>
+                    <p class="text-lg font-bold text-amber-600">{{ pending_orders|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-surface border border-border rounded-xl p-4">
+            <p class="text-xs text-muted mb-2">Theo phương thức</p>
+            <div class="space-y-1 text-xs">
+                <div class="flex justify-between">
+                    <span class="text-muted">Tiền mặt:</span>
+                    <span class="font-semibold text-gray-800">{{ '{:,.0f}'.format(pay_cash).replace(',', '.') }}đ</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-muted">Chuyển khoản:</span>
+                    <span class="font-semibold text-gray-800">{{ '{:,.0f}'.format(pay_transfer).replace(',', '.') }}đ</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-muted">Thẻ:</span>
+                    <span class="font-semibold text-gray-800">{{ '{:,.0f}'.format(pay_card).replace(',', '.') }}đ</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2 cột: Top sản phẩm + Thu chi -->
+    <div class="grid grid-cols-2 gap-6 mb-6">
+        <!-- Top sản phẩm bán chạy -->
+        <div class="bg-surface border border-border rounded-xl overflow-hidden">
+            <div class="px-4 py-3 bg-cream border-b border-border">
+                <h3 class="text-sm font-semibold text-primary flex items-center gap-2">
+                    <i data-lucide="trophy" class="w-4 h-4"></i>
+                    Top sản phẩm bán chạy
+                </h3>
+            </div>
+            <div class="divide-y divide-border">
+                {% for name, qty, rev in top_products %}
+                <div class="flex items-center justify-between px-4 py-2.5">
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center text-xs font-bold text-secondary">{{ loop.index }}</span>
+                        <span class="text-sm text-gray-800">{{ name }}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm font-semibold text-gray-800">{{ qty }} ly</span>
+                        <span class="text-xs text-muted ml-2">{{ '{:,.0f}'.format(rev).replace(',', '.') }}đ</span>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not top_products %}
+                <div class="px-4 py-8 text-center text-sm text-muted">Chưa có đơn hàng nào</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Thu chi trong ca -->
+        <div class="bg-surface border border-border rounded-xl overflow-hidden">
+            <div class="px-4 py-3 bg-cream border-b border-border">
+                <h3 class="text-sm font-semibold text-primary flex items-center gap-2">
+                    <i data-lucide="arrow-left-right" class="w-4 h-4"></i>
+                    Thu/Chi trong ca
+                </h3>
+            </div>
+            <div class="divide-y divide-border max-h-[300px] overflow-y-auto" style="scrollbar-width: thin;">
+                {% for t in transactions %}
+                <div class="flex items-center justify-between px-4 py-2.5">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold
+                            {{ 'bg-green-50 text-green-700' if t.type == 'income' else 'bg-red-50 text-red-600' }}">
+                            {{ 'Thu' if t.type == 'income' else 'Chi' }}
+                        </span>
+                        <span class="text-sm text-gray-700">{{ t.description }}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm font-semibold {{ 'text-green-600' if t.type == 'income' else 'text-red-500' }}">
+                            {{ '+' if t.type == 'income' else '-' }}{{ '{:,.0f}'.format(t.amount).replace(',', '.') }}đ
+                        </span>
+                        <p class="text-[10px] text-muted">{{ t.created_at|vntime('%H:%M') if t.created_at else '' }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not transactions %}
+                <div class="px-4 py-8 text-center text-sm text-muted">Chưa có giao dịch nào</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Danh sách đơn hàng đã thanh toán -->
+    <div class="bg-surface border border-border rounded-xl overflow-hidden">
+        <div class="px-4 py-3 bg-cream border-b border-border">
+            <h3 class="text-sm font-semibold text-primary flex items-center gap-2">
+                <i data-lucide="list-ordered" class="w-4 h-4"></i>
+                Đơn hàng đã thanh toán ({{ completed_orders|length }})
+            </h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-cream/50">
+                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-muted uppercase">Mã đơn</th>
+                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-muted uppercase">Bàn</th>
+                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-muted uppercase">Số món</th>
+                        <th class="px-4 py-2.5 text-right text-xs font-semibold text-muted uppercase">Tổng tiền</th>
+                        <th class="px-4 py-2.5 text-center text-xs font-semibold text-muted uppercase">PTTT</th>
+                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-muted uppercase">Thanh toán lúc</th>
+                        <th class="px-4 py-2.5 text-center text-xs font-semibold text-muted uppercase no-print">In</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border">
+                    {% for o in completed_orders %}
+                    <tr class="hover:bg-cream/30 transition-colors">
+                        <td class="px-4 py-2.5 font-medium text-primary">{{ o.order_number }}</td>
+                        <td class="px-4 py-2.5 text-gray-700">{{ o.table.name if o.table else '--' }}</td>
+                        <td class="px-4 py-2.5 text-gray-700">{{ o.items|length }} món</td>
+                        <td class="px-4 py-2.5 text-right font-semibold text-gray-800">{{ '{:,.0f}'.format(o.total_amount).replace(',', '.') }}đ</td>
+                        <td class="px-4 py-2.5 text-center">
+                            {% if o.payment_method == 'cash' %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-green-50 text-green-700">Tiền mặt</span>
+                            {% elif o.payment_method == 'transfer' %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700">CK</span>
+                            {% elif o.payment_method == 'card' %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-50 text-purple-700">Thẻ</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-2.5 text-muted">{{ o.paid_at|vntime('%H:%M %d/%m') if o.paid_at else '--' }}</td>
+                        <td class="px-4 py-2.5 text-center no-print">
+                            <a href="/cashier/invoice/{{ o.id }}" target="_blank"
+                               class="inline-flex items-center justify-center w-7 h-7 rounded-md text-muted hover:text-primary hover:bg-cream transition-colors">
+                                <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not completed_orders %}
+                    <tr>
+                        <td colspan="7" class="px-4 py-8 text-center text-muted">Chưa có đơn hàng nào trong ca này</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block cashier_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        lucide.createIcons();
+    });
+</script>
+{% endblock %}

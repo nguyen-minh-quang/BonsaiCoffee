@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hóa đơn #{{ order.id }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: #000;
+            width: 80mm;
+            margin: 0 auto;
+            padding: 8mm 4mm;
+            background: #fff;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .small {
+            font-size: 11px;
+        }
+
+        .large {
+            font-size: 16px;
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px dashed #000;
+            margin: 6px 0;
+        }
+
+        .shop-name {
+            font-size: 18px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th {
+            font-size: 13px;
+            font-weight: bold;
+            text-align: left;
+            padding: 3px 0;
+            border-bottom: 1px dashed #000;
+        }
+
+        table td {
+            font-size: 14px;
+            font-weight: 500;
+            padding: 3px 0;
+            vertical-align: top;
+        }
+
+        table th:last-child,
+        table td:last-child {
+            text-align: right;
+        }
+
+        table th:nth-child(2),
+        table td:nth-child(2) {
+            text-align: center;
+            width: 30px;
+        }
+
+        table th:nth-child(3),
+        table td:nth-child(3) {
+            text-align: right;
+            width: 65px;
+        }
+
+        table td:last-child {
+            width: 70px;
+        }
+
+        .total-row {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin: 2px 0;
+        }
+
+        @media print {
+            body {
+                padding: 0 2mm;
+            }
+
+            @page {
+                size: 80mm auto;
+                margin: 0;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        .btn-print {
+            display: block;
+            margin: 16px auto 0;
+            padding: 8px 24px;
+            background: #2D5F2D;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .btn-print:hover {
+            background: #1E3F1E;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <div class="text-center" style="margin-bottom: 4px;">
+        <div class="shop-name">{{ shop_name }}</div>
+        <div class="small">Quán cà phê</div>
+        <div class="small">Địa chỉ: {{ shop_address }}</div>
+        <div class="small">ĐT: {{ shop_phone }}</div>
+    </div>
+
+    <hr class="divider">
+
+    {% if is_temp %}
+    <div class="text-center bold" style="margin: 4px 0;">--- PHIẾU TẠM TÍNH ---</div>
+    <hr class="divider">
+    {% endif %}
+
+    <!-- Order Info -->
+    <div style="margin: 4px 0;">
+        <div class="info-row">
+            <span>Mã đơn:</span>
+            <span class="bold">#{{ order.id }}</span>
+        </div>
+        <div class="info-row">
+            <span>Ngày:</span>
+            <span>{{ order.created_at|vntime('%d/%m/%Y %H:%M') if order.created_at else '' }}</span>
+        </div>
+        <div class="info-row">
+            <span>Bàn:</span>
+            <span>{{ order.table.name if order.table else '--' }}</span>
+        </div>
+        <div class="info-row">
+            <span>Thu ngân:</span>
+            <span>{{ order.user.full_name if order.user else '--' }}</span>
+        </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Items -->
+    <table>
+        <thead>
+            <tr>
+                <th>Món</th>
+                <th>SL</th>
+                <th>Đ.Giá</th>
+                <th>T.Tiền</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set ns = namespace(total=0) %}
+            {% for item in order.items %}
+            {% set subtotal = item.unit_price * item.quantity %}
+            {% set ns.total = ns.total + subtotal %}
+            <tr>
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ '{:,.0f}'.format(item.unit_price) }}</td>
+                <td>{{ '{:,.0f}'.format(subtotal) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr class="divider">
+
+    <!-- Total -->
+    <div style="margin: 6px 0;">
+        {% if order.discount_value and order.discount_value > 0 %}
+        <div class="info-row small">
+            <span>Tạm tính:</span>
+            <span>{{ '{:,.0f}'.format(ns.total) }}đ</span>
+        </div>
+        <div class="info-row small">
+            <span>Giảm giá{% if order.discount_type == 'percent' %} ({{ '{:,.0f}'.format(order.discount_value) }}%){%
+                endif %}:</span>
+            <span>-{{ '{:,.0f}'.format(ns.total - order.total_amount) }}đ</span>
+        </div>
+        {% endif %}
+        <div class="info-row total-row">
+            <span>TỔNG CỘNG:</span>
+            <span>{{ '{:,.0f}'.format(order.total_amount) }}đ</span>
+        </div>
+        {% if not is_temp and order.payment_method %}
+        <div class="info-row small">
+            <span>Thanh toán:</span>
+            <span>
+                {% if order.payment_method == 'cash' %}Tiền mặt
+                {% elif order.payment_method == 'transfer' %}Chuyển khoản
+                {% elif order.payment_method == 'card' %}Thẻ
+                {% else %}{{ order.payment_method }}{% endif %}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+
+    <hr class="divider">
+
+    <!-- Footer -->
+    <div class="text-center small" style="margin-top: 6px;">
+        <p>{{ invoice_footer }}</p>
+    </div>
+
+    <!-- Print button (hidden when printing) -->
+    <button class="btn-print no-print" onclick="window.print()">In hóa đơn</button>
+
+    <script>
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                window.print();
+            }, 300);
+        });
+        window.onafterprint = function () {
+            window.close();
+        };
+    </script>
+</body>
+
+</html>

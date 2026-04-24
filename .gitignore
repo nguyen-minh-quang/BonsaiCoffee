@@ -1,0 +1,59 @@
+# ==================== TỰ ĐỘNG IGNORE ====================
+
+# --- File extension bỏ qua ---
+*.txt
+*.sh
+*.md
+reports
+slides
+
+# --- Ngoại lệ: giữ lại ---
+!taikhoan.txt
+!requirements.txt
+
+# --- Dependencies ---
+node_modules/
+.venv/
+__pycache__/
+
+# --- Build output ---
+dist/
+build/
+*.exe
+*.dll
+*.so
+
+# --- Database ---
+*.db
+*.sqlite
+
+# --- IDE & Editor ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Environment & Secret ---
+.env
+.env.local
+.env.production
+*.pem
+*.key
+credentials.json
+
+# --- Log & Cache ---
+*.log
+.cache/
+.temp/
+.tmp/
+
+# --- Python ---
+*.pyc
+*.egg-info/
+htmlcov/

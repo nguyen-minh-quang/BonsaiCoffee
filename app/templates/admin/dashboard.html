@@ -1,0 +1,179 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div>
+        <h1 class="text-2xl font-bold" style="font-family: 'Playfair Display', serif; color: #2D5F2D;">
+            Tổng quan
+        </h1>
+        <p class="mt-1 text-sm" style="color: #8B4513;">Thống kê nhanh hoạt động quán hôm nay</p>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <div class="bg-white rounded-xl p-4 border" style="border-color: #E5E2D9;">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(45,95,45,0.1);">
+                    <i data-lucide="coffee" class="w-5 h-5" style="color: #2D5F2D;"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold" style="color: #2D5F2D;">{{ total_products }}</p>
+                    <p class="text-xs" style="color: #8B4513;">Sản phẩm</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 border" style="border-color: #E5E2D9;">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(139,69,19,0.1);">
+                    <i data-lucide="layers" class="w-5 h-5" style="color: #8B4513;"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold" style="color: #2D5F2D;">{{ total_categories }}</p>
+                    <p class="text-xs" style="color: #8B4513;">Danh mục</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 border" style="border-color: #E5E2D9;">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(212,165,116,0.2);">
+                    <i data-lucide="armchair" class="w-5 h-5" style="color: #D4A574;"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold" style="color: #2D5F2D;">{{ total_tables }}</p>
+                    <p class="text-xs" style="color: #8B4513;">Bàn</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 border" style="border-color: #E5E2D9;">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(45,95,45,0.1);">
+                    <i data-lucide="users" class="w-5 h-5" style="color: #2D5F2D;"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold" style="color: #2D5F2D;">{{ total_employees }}</p>
+                    <p class="text-xs" style="color: #8B4513;">Nhân viên</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 border" style="border-color: #E5E2D9;">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(45,95,45,0.1);">
+                    <i data-lucide="banknote" class="w-5 h-5" style="color: #2D5F2D;"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold" style="color: #2D5F2D;">{{ '{:,.0f}'.format(today_revenue).replace(',', '.') }}đ</p>
+                    <p class="text-xs" style="color: #8B4513;">Doanh thu hôm nay</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl p-4 border" style="border-color: #E5E2D9;">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(139,69,19,0.1);">
+                    <i data-lucide="receipt" class="w-5 h-5" style="color: #8B4513;"></i>
+                </div>
+                <div>
+                    <p class="text-xl font-bold" style="color: #2D5F2D;">{{ today_orders }}</p>
+                    <p class="text-xs" style="color: #8B4513;">Đơn hôm nay</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart + Top Products -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Biểu đồ doanh thu 7 ngày -->
+        <div class="lg:col-span-2 bg-white rounded-xl border p-5" style="border-color: #E5E2D9;">
+            <h3 class="text-sm font-semibold mb-4 flex items-center gap-2" style="color: #2D5F2D;">
+                <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                Doanh thu 7 ngày qua
+            </h3>
+            <div style="height: 280px;">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Top sản phẩm bán chạy -->
+        <div class="bg-white rounded-xl border overflow-hidden" style="border-color: #E5E2D9;">
+            <div class="px-5 py-4 border-b" style="border-color: #E5E2D9; background: #FAFAF5;">
+                <h3 class="text-sm font-semibold flex items-center gap-2" style="color: #2D5F2D;">
+                    <i data-lucide="trophy" class="w-4 h-4"></i>
+                    Top bán chạy tuần
+                </h3>
+            </div>
+            <div class="divide-y" style="border-color: #E5E2D9;">
+                {% for name, qty in top_products %}
+                <div class="flex items-center justify-between px-5 py-3">
+                    <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold"
+                              style="background: rgba(212,165,116,0.2); color: #8B4513;">{{ loop.index }}</span>
+                        <span class="text-sm text-gray-800">{{ name }}</span>
+                    </div>
+                    <span class="text-sm font-semibold" style="color: #2D5F2D;">{{ qty }} ly</span>
+                </div>
+                {% endfor %}
+                {% if not top_products %}
+                <div class="px-5 py-8 text-center text-sm" style="color: #8B4513;">Chưa có dữ liệu tuần này</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ chart_labels | tojson }},
+            datasets: [{
+                label: 'Doanh thu',
+                data: {{ chart_data | tojson }},
+                backgroundColor: '#2D5F2D',
+                borderRadius: 6,
+                maxBarThickness: 48,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(ctx) {
+                            return new Intl.NumberFormat('vi-VN').format(ctx.raw) + 'đ';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(v) {
+                            if (v >= 1000000) return (v / 1000000).toFixed(1) + 'tr';
+                            if (v >= 1000) return (v / 1000) + 'k';
+                            return v;
+                        },
+                        font: { size: 11 },
+                        color: '#8B4513',
+                    },
+                    grid: { color: '#E5E2D9' },
+                    border: { display: false },
+                },
+                x: {
+                    ticks: { font: { size: 11 }, color: '#8B4513' },
+                    grid: { display: false },
+                    border: { display: false },
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

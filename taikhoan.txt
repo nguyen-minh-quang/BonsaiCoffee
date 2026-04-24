@@ -1,0 +1,19 @@
+============================================
+  BREWMANAGER - TÀI KHOẢN ĐĂNG NHẬP
+  http://localhost:5250
+============================================
+
+1. Quản trị viên (Admin)
+   - Tên đăng nhập: admin
+   - Mật khẩu:      admin123
+   - Quyền:         Toàn quyền quản lý hệ thống
+
+2. Thu ngân (Cashier)
+   - Tên đăng nhập: thungan
+   - Mật khẩu:      123456
+   - Quyền:         Bán hàng, thu chi, đóng mở ca
+
+3. Nhân viên phục vụ (Waiter)
+   - Tên đăng nhập: phucvu
+   - Mật khẩu:      123456
+   - Quyền:         Xem bàn, tạo order

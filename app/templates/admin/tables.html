@@ -1,0 +1,240 @@
+{% extends "admin/base_admin.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex items-center justify-between flex-wrap gap-4">
+        <h1 class="text-2xl font-bold" style="font-family: 'Playfair Display', serif; color: #2D5F2D;">
+            Quản lý bàn
+        </h1>
+        <button onclick="openModal('tableModal'); resetForm()"
+            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+            style="background-color: #2D5F2D;"
+            onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            Thêm bàn
+        </button>
+    </div>
+
+    <!-- Filter -->
+    <div class="bg-white rounded-lg border p-4" style="border-color: #E5E2D9;">
+        <div class="flex items-center gap-3 flex-wrap">
+            <label class="text-sm font-medium" style="color: #2D5F2D;">Lọc theo khu vực:</label>
+            <select id="filterArea" onchange="filterByArea()"
+                class="px-3 py-2 rounded-lg border text-sm outline-none"
+                style="border-color: #E5E2D9; color: #2D5F2D; min-width: 180px;">
+                <option value="">Tất cả</option>
+                {% for area in areas %}
+                <option value="{{ area.id }}">{{ area.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="bg-white rounded-lg border overflow-hidden" style="border-color: #E5E2D9;">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr style="background-color: #FAFAF5; border-bottom: 1px solid #E5E2D9;">
+                        <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D; width: 60px;">STT</th>
+                        <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Tên bàn</th>
+                        <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Khu vực</th>
+                        <th class="px-4 py-3 text-center font-semibold" style="color: #2D5F2D; width: 100px;">Sức chứa</th>
+                        <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D; width: 120px;">Trạng thái</th>
+                        <th class="px-4 py-3 text-center font-semibold" style="color: #2D5F2D; width: 140px;">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    {% for t in tables %}
+                    <tr class="border-b transition-colors hover:bg-gray-50 table-row"
+                        data-area="{{ t.area_id }}"
+                        style="border-color: #E5E2D9; {% if loop.index is odd %}background-color: #fff;{% else %}background-color: #FAFAF5;{% endif %}">
+                        <td class="px-4 py-3" style="color: #8B4513;">{{ loop.index }}</td>
+                        <td class="px-4 py-3 font-medium" style="color: #2D5F2D;">{{ t.name }}</td>
+                        <td class="px-4 py-3" style="color: #8B4513;">{{ t.area.name if t.area else '—' }}</td>
+                        <td class="px-4 py-3 text-center" style="color: #8B4513;">{{ t.capacity }}</td>
+                        <td class="px-4 py-3">
+                            {% if t.status == 'available' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                Trống
+                            </span>
+                            {% elif t.status == 'occupied' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                Có khách
+                            </span>
+                            {% elif t.status == 'reserved' %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                Đã đặt
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-center">
+                            <div class="inline-flex items-center gap-1">
+                                <button onclick="editTable({{ t.id }}, '{{ t.name }}', {{ t.area_id or 'null' }}, {{ t.capacity }})"
+                                    class="p-1.5 rounded-md transition-colors hover:bg-gray-100" title="Sửa">
+                                    <i data-lucide="pencil" class="w-4 h-4" style="color: #8B4513;"></i>
+                                </button>
+                                <button onclick="confirmDelete({{ t.id }}, '{{ t.name }}')"
+                                    class="p-1.5 rounded-md transition-colors hover:bg-red-50" title="Xóa">
+                                    <i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not tables %}
+                    <tr>
+                        <td colspan="6" class="px-4 py-8 text-center" style="color: #8B4513;">
+                            Chưa có bàn nào. Hãy thêm bàn mới.
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Thêm/Sửa Bàn -->
+<div id="tableModal" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/40" onclick="closeModal('tableModal')"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md">
+        <div class="bg-white rounded-lg border p-6" style="border-color: #E5E2D9;">
+            <div class="flex items-center justify-between mb-5">
+                <h2 id="tableModalTitle" class="text-lg font-bold" style="font-family: 'Playfair Display', serif; color: #2D5F2D;">
+                    Thêm bàn
+                </h2>
+                <button onclick="closeModal('tableModal')" class="p-1 rounded-md hover:bg-gray-100">
+                    <i data-lucide="x" class="w-5 h-5" style="color: #8B4513;"></i>
+                </button>
+            </div>
+            <form id="tableForm" method="POST">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1" style="color: #2D5F2D;">Tên bàn</label>
+                        <input type="text" name="name" id="tblName" required
+                            class="w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors"
+                            style="border-color: #E5E2D9; color: #2D5F2D;"
+                            onfocus="this.style.borderColor='#2D5F2D'" onblur="this.style.borderColor='#E5E2D9'"
+                            placeholder="Ví dụ: Bàn 1, Bàn VIP...">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" style="color: #2D5F2D;">Khu vực</label>
+                        <select name="area_id" id="tblArea" required
+                            class="w-full px-3 py-2 rounded-lg border text-sm outline-none"
+                            style="border-color: #E5E2D9; color: #2D5F2D;">
+                            <option value="">-- Chọn khu vực --</option>
+                            {% for area in areas %}
+                            <option value="{{ area.id }}">{{ area.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" style="color: #2D5F2D;">Sức chứa (người)</label>
+                        <input type="number" name="capacity" id="tblCapacity" value="4" min="1" max="50"
+                            class="w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors"
+                            style="border-color: #E5E2D9; color: #2D5F2D;"
+                            onfocus="this.style.borderColor='#2D5F2D'" onblur="this.style.borderColor='#E5E2D9'">
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" onclick="closeModal('tableModal')"
+                        class="px-4 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-gray-50"
+                        style="border-color: #E5E2D9; color: #8B4513;">
+                        Hủy
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+                        style="background-color: #2D5F2D;"
+                        onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+                        Lưu
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Confirm Delete Dialog -->
+<div id="deleteDialog" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/40" onclick="closeModal('deleteDialog')"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm">
+        <div class="bg-white rounded-lg border p-6" style="border-color: #E5E2D9;">
+            <div class="text-center">
+                <div class="mx-auto w-12 h-12 rounded-full flex items-center justify-center bg-red-50 mb-4">
+                    <i data-lucide="alert-triangle" class="w-6 h-6 text-red-500"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2" style="color: #2D5F2D;">Xác nhận xóa</h3>
+                <p class="text-sm mb-6" style="color: #8B4513;">
+                    Bạn có chắc muốn xóa "<span id="deleteName" class="font-medium"></span>"?
+                </p>
+                <div class="flex justify-center gap-3">
+                    <button onclick="closeModal('deleteDialog')"
+                        class="px-4 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-gray-50"
+                        style="border-color: #E5E2D9; color: #8B4513;">
+                        Hủy
+                    </button>
+                    <form id="deleteForm" method="POST" class="inline">
+                        <button type="submit"
+                            class="px-4 py-2 text-sm font-medium text-white rounded-lg bg-red-600 transition-colors hover:bg-red-700">
+                            Xóa
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openModal(id) {
+        document.getElementById(id).classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    function resetForm() {
+        document.getElementById('tableModalTitle').textContent = 'Thêm bàn';
+        document.getElementById('tableForm').action = '/admin/tables/create';
+        document.getElementById('tblName').value = '';
+        document.getElementById('tblArea').value = '';
+        document.getElementById('tblCapacity').value = '4';
+    }
+
+    function editTable(id, name, areaId, capacity) {
+        document.getElementById('tableModalTitle').textContent = 'Sửa thông tin bàn';
+        document.getElementById('tableForm').action = '/admin/tables/' + id + '/update';
+        document.getElementById('tblName').value = name;
+        document.getElementById('tblArea').value = areaId || '';
+        document.getElementById('tblCapacity').value = capacity;
+        openModal('tableModal');
+    }
+
+    function confirmDelete(id, name) {
+        document.getElementById('deleteName').textContent = name;
+        document.getElementById('deleteForm').action = '/admin/tables/' + id + '/delete';
+        openModal('deleteDialog');
+    }
+
+    function filterByArea() {
+        var val = document.getElementById('filterArea').value;
+        var rows = document.querySelectorAll('.table-row');
+        rows.forEach(function (row) {
+            if (!val || row.dataset.area === val) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+</script>
+{% endblock %}
