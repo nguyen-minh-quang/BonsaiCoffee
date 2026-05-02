@@ -143,28 +143,16 @@
     <div class="text-center bold" style="margin: 6px 0;">DOANH THU & TIỀN MẶT</div>
 
     <div style="margin: 4px 0;">
-        <div class="info-row"><span>Tiền đầu ca:</span><span>{{ '{:,.0f}'.format(shift.opening_amount).replace(',', '.')
-                }}đ</span></div>
-        <div class="info-row"><span>Doanh thu (+):</span><span>{{ '{:,.0f}'.format(revenue).replace(',', '.') }}đ</span>
-        </div>
-        <div class="info-row"><span>Thu ngoài (+):</span><span>{{ '{:,.0f}'.format(total_income).replace(',', '.')
-                }}đ</span></div>
-        <div class="info-row"><span>Chi ngoài (-):</span><span>{{ '{:,.0f}'.format(total_expense).replace(',', '.')
-                }}đ</span></div>
+        <div class="info-row"><span>Tiền đầu ca:</span><span>{{ "{:,.0f}".format(shift.opening_amount).replace(',', '.') }}đ</span></div>
+        <div class="info-row"><span>Doanh thu (Tiền mặt):</span><span>{{ "{:,.0f}".format(pay_cash).replace(',', '.') }}đ</span></div>
+        <div class="info-row"><span>Doanh thu (Chuyển khoản):</span><span>{{ "{:,.0f}".format(pay_transfer + pay_card).replace(',', '.') }}đ</span></div>
+        <div class="info-row"><span>Thu ngoài (+):</span><span>{{ "{:,.0f}".format(total_income).replace(',', '.') }}đ</span></div>
+        <div class="info-row"><span>Chi ngoài (-):</span><span>{{ "{:,.0f}".format(total_expense).replace(',', '.') }}đ</span></div>
         <hr class="divider">
-        <div class="info-row large" style="margin: 8px 0; font-size: 16px;"><span>TIỀN CUỐI CA:</span><span>{{
-                '{:,.0f}'.format(balance).replace(',', '.') }}đ</span></div>
+        <div class="info-row large" style="margin: 8px 0; font-size: 16px;"><span>TIỀN TRONG KÉT:</span><span>{{ "{:,.0f}".format(expected_cash).replace(',', '.') }}đ</span></div>
     </div>
 
-    <hr class="divider">
-    <div class="text-center bold" style="margin: 6px 0;">PHƯƠNG THỨC THANH TOÁN</div>
-    <div style="margin: 4px 0;">
-        <div class="info-row"><span>Tiền mặt:</span><span>{{ '{:,.0f}'.format(pay_cash).replace(',', '.') }}đ</span>
-        </div>
-        <div class="info-row"><span>Chuyển khoản:</span><span>{{ '{:,.0f}'.format(pay_transfer).replace(',', '.')
-                }}đ</span></div>
-        <div class="info-row"><span>Thẻ:</span><span>{{ '{:,.0f}'.format(pay_card).replace(',', '.') }}đ</span></div>
-    </div>
+
 
     <hr class="divider">
     <div class="text-center bold" style="margin: 6px 0;">SẢN PHẨM BÁN CHẠY</div>

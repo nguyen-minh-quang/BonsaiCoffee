@@ -6,7 +6,7 @@ from flask_login import login_required, current_user
 from sqlalchemy import func
 
 from app import db
-from app.models import User, Category, Product, Area, Table, Order, OrderItem, Transaction, ShopSetting
+from app.models import User, Category, Product, Area, Table, Order, OrderItem, Transaction, ShopSetting, Shift
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -588,6 +588,12 @@ def reports():
     total_income = sum(t.amount for t in transactions if t.type == 'income')
     total_expense = sum(t.amount for t in transactions if t.type == 'expense')
 
+    # Ca làm việc
+    shifts = Shift.query.filter(
+        db.func.date(Shift.start_time) >= start_date,
+        db.func.date(Shift.start_time) <= end_date,
+    ).order_by(Shift.start_time.desc()).all()
+
     return render_template(
         'admin/reports.html',
         orders=orders,
@@ -598,6 +604,7 @@ def reports():
         total_expense=total_expense,
         start_date=start_date,
         end_date=end_date,
+        shifts=shifts,
     )
 
 

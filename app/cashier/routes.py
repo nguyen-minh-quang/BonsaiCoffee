@@ -785,7 +785,7 @@ def shift_report(shift_id):
         revenue=revenue,
         total_income=total_income,
         total_expense=total_expense,
-        balance=float(shift.opening_amount) + revenue + total_income - total_expense,
+        expected_cash=float(shift.opening_amount) + pay_cash + total_income - total_expense,
         pay_cash=pay_cash,
         pay_transfer=pay_transfer,
         pay_card=pay_card,
@@ -815,6 +815,7 @@ def api_shift_summary():
     txs = Transaction.query.filter_by(shift_id=shift.id).all()
     total_income = sum(float(t.amount) for t in txs if t.type == "income")
     total_expense = sum(float(t.amount) for t in txs if t.type == "expense")
+    pay_cash = sum(float(o.total_amount) for o in completed_orders if o.payment_method == "cash")
 
     data = {
         "shift_id": shift.id,
@@ -824,6 +825,6 @@ def api_shift_summary():
         "order_count": order_count,
         "total_income": total_income,
         "total_expense": total_expense,
-        "balance": float(shift.opening_amount) + revenue + total_income - total_expense,
+        "balance": float(shift.opening_amount) + pay_cash + total_income - total_expense,
     }
     return _ok(data)

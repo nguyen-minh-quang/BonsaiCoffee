@@ -368,6 +368,11 @@
         </div>
         <p class="text-xs text-red-500 mb-4" id="discount-preview"></p>
 
+        <label class="flex items-center gap-2 mb-4 cursor-pointer">
+            <input type="checkbox" id="auto-print-invoice" class="w-4 h-4 rounded border-border text-primary focus:ring-primary" checked>
+            <span class="text-sm text-gray-700 font-medium cursor-pointer">In hóa đơn sau khi thanh toán</span>
+        </label>
+
         <button onclick="submitPayment()" id="btn-confirm-pay"
                 class="w-full flex items-center justify-center gap-2 py-3 text-base rounded-xl bg-primary text-white font-medium hover:opacity-90 transition-colors disabled:opacity-40"
                 disabled>
@@ -770,7 +775,9 @@
             });
             closeModal('payment-modal');
             showToast('Thanh toán thành công!', 'success');
-            window.open(`/cashier/invoice/${currentOrder.id}`, '_blank');
+            if (document.getElementById('auto-print-invoice').checked) {
+                window.open(`/cashier/invoice/${currentOrder.id}`, '_blank');
+            }
             currentOrder = null; selectedTableId = null;
             await loadTables();
             renderOrder();
@@ -783,24 +790,24 @@
         transferTargetId = null;
         const empty = tables.filter(t => !t.occupied && t.id !== selectedTableId);
         const c = document.getElementById('transfer-tables-grid');
-        c.innerHTML = empty.length ? empty.map(t => `<button class="table-card" onclick="POS.selectTransferTarget(${t.id}, this)">${t.name}</button>`).join('')
+        c.innerHTML = empty.length ? empty.map(t => `<button class="table-card" onclick="selectTransferTarget(${t.id}, this)">${t.name}</button>`).join('')
             : '<p class="col-span-3 text-sm text-muted text-center py-4">Không có bàn trống</p>';
         document.getElementById('btn-confirm-transfer').disabled = true;
         openModal('transfer-modal');
     };
 
-    function selectTransferTarget(id, btn) {
+    window.selectTransferTarget = function(id, btn) {
         transferTargetId = id;
         document.querySelectorAll('#transfer-tables-grid .table-card').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         document.getElementById('btn-confirm-transfer').disabled = false;
-    }
+    };
 
     window.submitTransfer = async function() {
         if (!currentOrder || !transferTargetId) return;
         try {
             await api(`/cashier/api/order/${currentOrder.id}/transfer`, {
-                method: 'POST', body: JSON.stringify({ target_table_id: transferTargetId })
+                method: 'POST', body: JSON.stringify({ new_table_id: transferTargetId })
             });
             closeModal('transfer-modal');
             showToast('Chuyển bàn thành công!', 'success');
@@ -815,25 +822,25 @@
         mergeTargetId = null;
         const occ = tables.filter(t => t.occupied && t.id !== selectedTableId);
         const c = document.getElementById('merge-tables-grid');
-        c.innerHTML = occ.length ? occ.map(t => `<button class="table-card occupied" onclick="POS.selectMergeTarget(${t.id}, this)">
+        c.innerHTML = occ.length ? occ.map(t => `<button class="table-card occupied" onclick="selectMergeTarget(${t.id}, this)">
             <span class="text-xs font-semibold">${t.name}</span><span class="text-[10px] text-secondary/70">${fmt(t.total)}</span>
         </button>`).join('') : '<p class="col-span-3 text-sm text-muted text-center py-4">Không có bàn nào có order</p>';
         document.getElementById('btn-confirm-merge').disabled = true;
         openModal('merge-modal');
     };
 
-    function selectMergeTarget(id, btn) {
+    window.selectMergeTarget = function(id, btn) {
         mergeTargetId = id;
         document.querySelectorAll('#merge-tables-grid .table-card').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         document.getElementById('btn-confirm-merge').disabled = false;
-    }
+    };
 
     window.submitMerge = async function() {
         if (!currentOrder || !mergeTargetId) return;
         try {
             await api('/cashier/api/order/merge', {
-                method: 'POST', body: JSON.stringify({ source_order_id: currentOrder.id, target_table_id: mergeTargetId })
+                method: 'POST', body: JSON.stringify({ source_order_ids: [currentOrder.id], target_table_id: mergeTargetId })
             });
             closeModal('merge-modal');
             showToast('Gộp bàn thành công!', 'success');
@@ -899,7 +906,11 @@
         setInterval(async () => {
             await loadTables(false);
             if (selectedTableId) {
-                // Không hiển thị lỗi ra màn hình nếu fetch ngầm bị fail
+                // Kiểm tra nếu người dùng đang gõ ghi chú thì tạm dừng reload order để không mất focus
+                const activeEl = document.activeElement;
+                if (activeEl && activeEl.tagName === 'INPUT' && activeEl.closest('#order-items-list')) {
+                    return; 
+                }
                 try {
                     await loadOrder(selectedTableId);
                 } catch (e) { }

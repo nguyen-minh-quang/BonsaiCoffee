@@ -89,10 +89,10 @@
             Đơn hàng
         </h2>
         <div class="bg-white rounded-lg border overflow-hidden" style="border-color: #E5E2D9;">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr style="background-color: #FAFAF5; border-bottom: 1px solid #E5E2D9;">
+            <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
+                <table class="w-full text-sm relative">
+                    <thead class="sticky top-0 z-10" style="background-color: #FAFAF5; box-shadow: 0 1px 0 #E5E2D9;">
+                        <tr>
                             <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Mã đơn</th>
                             <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Bàn</th>
                             <th class="px-4 py-3 text-right font-semibold" style="color: #2D5F2D;">Tổng tiền</th>
@@ -138,10 +138,10 @@
             Thu / Chi ngoài
         </h2>
         <div class="bg-white rounded-lg border overflow-hidden" style="border-color: #E5E2D9;">
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr style="background-color: #FAFAF5; border-bottom: 1px solid #E5E2D9;">
+            <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
+                <table class="w-full text-sm relative">
+                    <thead class="sticky top-0 z-10" style="background-color: #FAFAF5; box-shadow: 0 1px 0 #E5E2D9;">
+                        <tr>
                             <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D; width: 100px;">Loại</th>
                             <th class="px-4 py-3 text-right font-semibold" style="color: #2D5F2D; width: 140px;">Số tiền</th>
                             <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Mô tả</th>
@@ -179,6 +179,63 @@
                         <tr>
                             <td colspan="5" class="px-4 py-8 text-center" style="color: #8B4513;">
                                 Không có giao dịch thu/chi nào trong khoảng thời gian này.
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <!-- Bảng lịch sử ca làm việc -->
+    <div>
+        <h2 class="text-lg font-bold mb-3" style="font-family: 'Playfair Display', serif; color: #2D5F2D;">
+            Lịch sử Ca làm việc
+        </h2>
+        <div class="bg-white rounded-lg border overflow-hidden" style="border-color: #E5E2D9;">
+            <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
+                <table class="w-full text-sm relative">
+                    <thead class="sticky top-0 z-10" style="background-color: #FAFAF5; box-shadow: 0 1px 0 #E5E2D9;">
+                        <tr>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D; width: 80px;">Ca số</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Thu ngân</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Bắt đầu</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Kết thúc</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Trạng thái</th>
+                            <th class="px-4 py-3 text-center font-semibold" style="color: #2D5F2D; width: 120px;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for shift in shifts %}
+                        <tr class="border-b transition-colors hover:bg-gray-50"
+                            style="border-color: #E5E2D9; {% if loop.index is odd %}background-color: #fff;{% else %}background-color: #FAFAF5;{% endif %}">
+                            <td class="px-4 py-3 font-medium" style="color: #2D5F2D;">#{{ shift.id }}</td>
+                            <td class="px-4 py-3" style="color: #8B4513;">{{ shift.user.full_name if shift.user else '—' }}</td>
+                            <td class="px-4 py-3" style="color: #8B4513;">{{ shift.start_time|vntime('%H:%M %d/%m') if shift.start_time else '—' }}</td>
+                            <td class="px-4 py-3" style="color: #8B4513;">{{ shift.end_time|vntime('%H:%M %d/%m') if shift.end_time else '—' }}</td>
+                            <td class="px-4 py-3">
+                                {% if shift.status == 'closed' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    Đã đóng
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    Đang mở
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <a href="/cashier/shift-report/{{ shift.id }}?print=1" target="_blank" title="In báo cáo ca"
+                                   class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-colors">
+                                    <i data-lucide="printer" class="w-4 h-4"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not shifts %}
+                        <tr>
+                            <td colspan="6" class="px-4 py-8 text-center" style="color: #8B4513;">
+                                Không có ca làm việc nào trong khoảng thời gian này.
                             </td>
                         </tr>
                         {% endif %}
