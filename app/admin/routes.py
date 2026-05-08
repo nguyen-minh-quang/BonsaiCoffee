@@ -157,6 +157,22 @@ def category_toggle(id):
     return redirect(url_for('admin.categories'))
 
 
+@admin_bp.route('/categories/<int:id>/delete', methods=['POST'])
+@admin_required
+def category_delete(id):
+    """Xóa danh mục trống."""
+    category = Category.query.get_or_404(id)
+    
+    if category.products.count() > 0:
+        flash('Không thể xóa danh mục đang chứa sản phẩm. Vui lòng xóa sản phẩm trước hoặc chỉ ẩn danh mục này.', 'error')
+        return redirect(url_for('admin.categories'))
+        
+    db.session.delete(category)
+    db.session.commit()
+    flash('Đã xóa danh mục thành công.', 'success')
+    return redirect(url_for('admin.categories'))
+
+
 # ===========================================================================
 # QUẢN LÝ MENU / SẢN PHẨM (Product)
 # ===========================================================================

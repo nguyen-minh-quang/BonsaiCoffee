@@ -3,7 +3,7 @@
 {% block body %}
 <div class="flex min-h-screen">
     <!-- Sidebar -->
-    <aside class="sidebar fixed top-0 left-0 h-screen w-[260px] bg-surface border-r border-border flex flex-col z-40 no-print">
+    <aside class="sidebar fixed top-0 left-0 h-screen w-[260px] bg-surface border-r border-border flex flex-col z-40 no-print transition-transform duration-300 -translate-x-full lg:translate-x-0">
         <!-- Logo -->
         <div class="px-6 py-6 border-b border-border">
             <a href="{{ url_for('admin.dashboard') }}" class="flex items-center gap-3 group">
@@ -72,13 +72,17 @@
     </aside>
 
     <!-- Main Content -->
-    <div class="flex-1 ml-[260px]">
+    <div class="flex-1 w-full lg:ml-[260px] transition-all duration-300">
         <!-- Top Header Bar -->
         <header class="sticky top-0 z-30 bg-cream/80 backdrop-blur-sm border-b border-border no-print">
-            <div class="flex items-center justify-between px-8 py-4">
-                <!-- Breadcrumb / Page Title -->
-                <div>
-                    <h2 class="font-display text-2xl font-bold text-gray-900">
+            <div class="flex items-center justify-between px-4 lg:px-8 py-3 lg:py-4">
+                <!-- Mobile Menu Button & Breadcrumb -->
+                <div class="flex items-center gap-3">
+                    <button class="lg:hidden p-2 -ml-2 rounded-lg text-gray-500 hover:bg-gray-100 focus:outline-none" onclick="toggleSidebar()">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                    <div>
+                        <h2 class="font-display text-xl lg:text-2xl font-bold text-gray-900">
                         {% block page_title %}Tổng quan{% endblock %}
                     </h2>
                     <p class="text-sm text-muted mt-0.5">
@@ -102,7 +106,7 @@
         </header>
 
         <!-- Page Content -->
-        <main class="px-8 py-6">
+        <main class="px-4 lg:px-8 py-6">
             <div class="animate-fade-in">
                 {% block content %}{% endblock %}
             </div>

@@ -64,6 +64,10 @@
                                     <i data-lucide="eye" class="w-4 h-4 text-green-500"></i>
                                 </button>
                                 {% endif %}
+                                <button onclick="confirmDelete({{ cat.id }}, '{{ cat.name }}')"
+                                    class="p-1.5 rounded-md transition-colors hover:bg-red-50" title="Xóa danh mục">
+                                    <i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -196,6 +200,15 @@
         } else {
             document.getElementById('toggleBtn').className = 'px-4 py-2 text-sm font-medium text-white rounded-lg bg-red-600 transition-colors hover:bg-red-700';
         }
+        openModal('deleteDialog');
+    }
+
+    function confirmDelete(id, name) {
+        document.getElementById('deleteName').textContent = name;
+        document.getElementById('toggleActionName').textContent = 'xóa vĩnh viễn';
+        document.getElementById('deleteForm').action = '/admin/categories/' + id + '/delete';
+        document.getElementById('toggleTitle').textContent = 'Xóa danh mục';
+        document.getElementById('toggleBtn').className = 'px-4 py-2 text-sm font-medium text-white rounded-lg bg-red-600 transition-colors hover:bg-red-700';
         openModal('deleteDialog');
     }
 
