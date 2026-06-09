@@ -55,8 +55,11 @@ def login():
         user = User.query.filter_by(username=username).first()
 
         if user and user.check_password(password):
-            login_user(user)
-            return redirect_by_role(user)
+            if not getattr(user, 'is_active', True):
+                flash('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Quản trị viên.', 'danger')
+            else:
+                login_user(user)
+                return redirect_by_role(user)
         else:
             flash('Sai tên đăng nhập hoặc mật khẩu.', 'danger')
 

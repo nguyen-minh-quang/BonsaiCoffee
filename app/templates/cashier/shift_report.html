@@ -1,4 +1,4 @@
-{% extends "cashier/base_cashier.html" %}
+{% extends "admin/base_admin.html" if current_user.role == 'admin' else "cashier/base_cashier.html" %}
 
 {% block title %}Báo cáo ca{% endblock %}
 
@@ -242,7 +242,8 @@
 </div>
 {% endblock %}
 
-{% block cashier_scripts %}
+{% block scripts %}
+{{ super() }}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         lucide.createIcons();

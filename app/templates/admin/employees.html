@@ -25,6 +25,7 @@
                         <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D; width: 60px;">STT</th>
                         <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Họ tên</th>
                         <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D;">Tên đăng nhập</th>
+                        <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D; width: 140px;">Số điện thoại</th>
                         <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D; width: 120px;">Vai trò</th>
                         <th class="px-4 py-3 text-left font-semibold" style="color: #2D5F2D; width: 120px;">Trạng thái</th>
                         <th class="px-4 py-3 text-center font-semibold" style="color: #2D5F2D; width: 180px;">Hành động</th>
@@ -37,6 +38,7 @@
                         <td class="px-4 py-3" style="color: #8B4513;">{{ loop.index }}</td>
                         <td class="px-4 py-3 font-medium" style="color: #2D5F2D;">{{ emp.full_name }}</td>
                         <td class="px-4 py-3" style="color: #8B4513;">{{ emp.username }}</td>
+                        <td class="px-4 py-3" style="color: #8B4513;">{{ emp.phone or '—' }}</td>
                         <td class="px-4 py-3">
                             {% if emp.role == 'admin' %}
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -65,7 +67,7 @@
                         </td>
                         <td class="px-4 py-3 text-center">
                             <div class="inline-flex items-center gap-1">
-                                <button onclick="editEmployee({{ emp.id }}, '{{ emp.full_name }}', '{{ emp.role }}')"
+                                <button onclick="editEmployee({{ emp.id }}, '{{ emp.full_name }}', '{{ emp.role }}', '{{ emp.phone or '' }}')"
                                     class="p-1.5 rounded-md transition-colors hover:bg-gray-100" title="Sửa">
                                     <i data-lucide="pencil" class="w-4 h-4" style="color: #8B4513;"></i>
                                 </button>
@@ -82,6 +84,12 @@
                                 <button onclick="confirmToggle({{ emp.id }}, '{{ emp.full_name }}', 'mở khóa')"
                                     class="p-1.5 rounded-md transition-colors hover:bg-green-50" title="Mở khóa">
                                     <i data-lucide="unlock" class="w-4 h-4 text-green-500"></i>
+                                </button>
+                                {% endif %}
+                                {% if emp.id != current_user.id %}
+                                <button onclick="confirmDelete({{ emp.id }}, '{{ emp.full_name }}')"
+                                    class="p-1.5 rounded-md transition-colors hover:bg-red-100" title="Xóa vĩnh viễn">
+                                    <i data-lucide="trash-2" class="w-4 h-4 text-red-600"></i>
                                 </button>
                                 {% endif %}
                             </div>
@@ -141,6 +149,14 @@
                             placeholder="Nhập mật khẩu">
                     </div>
                     <div>
+                        <label class="block text-sm font-medium mb-1" style="color: #2D5F2D;">Số điện thoại</label>
+                        <input type="tel" name="phone"
+                            class="w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors"
+                            style="border-color: #E5E2D9; color: #2D5F2D;"
+                            onfocus="this.style.borderColor='#2D5F2D'" onblur="this.style.borderColor='#E5E2D9'"
+                            placeholder="Nhập số điện thoại (không bắt buộc)">
+                    </div>
+                    <div>
                         <label class="block text-sm font-medium mb-1" style="color: #2D5F2D;">Vai trò</label>
                         <select name="role" required
                             class="w-full px-3 py-2 rounded-lg border text-sm outline-none"
@@ -188,6 +204,13 @@
                     <div>
                         <label class="block text-sm font-medium mb-1" style="color: #2D5F2D;">Họ tên</label>
                         <input type="text" name="full_name" id="editEmpName" required
+                            class="w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors"
+                            style="border-color: #E5E2D9; color: #2D5F2D;"
+                            onfocus="this.style.borderColor='#2D5F2D'" onblur="this.style.borderColor='#E5E2D9'">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1" style="color: #2D5F2D;">Số điện thoại</label>
+                        <input type="tel" name="phone" id="editEmpPhone"
                             class="w-full px-3 py-2 rounded-lg border text-sm outline-none transition-colors"
                             style="border-color: #E5E2D9; color: #2D5F2D;"
                             onfocus="this.style.borderColor='#2D5F2D'" onblur="this.style.borderColor='#E5E2D9'">
@@ -295,6 +318,37 @@
     </div>
 </div>
 
+<!-- Hard Delete Dialog -->
+<div id="hardDeleteDialog" class="fixed inset-0 z-50 hidden">
+    <div class="absolute inset-0 bg-black/40" onclick="closeModal('hardDeleteDialog')"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm">
+        <div class="bg-white rounded-lg border p-6" style="border-color: #E5E2D9;">
+            <div class="text-center">
+                <div class="mx-auto w-12 h-12 rounded-full flex items-center justify-center bg-red-50 mb-4">
+                    <i data-lucide="trash-2" class="w-6 h-6 text-red-600"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2" style="color: #2D5F2D;">Xóa vĩnh viễn</h3>
+                <p class="text-sm mb-6" style="color: #8B4513;">
+                    Bạn có chắc muốn xóa vĩnh viễn nhân viên "<span id="hardDeleteName" class="font-medium"></span>"? Hành động này không thể hoàn tác nếu thành công.
+                </p>
+                <div class="flex justify-center gap-3">
+                    <button onclick="closeModal('hardDeleteDialog')"
+                        class="px-4 py-2 text-sm font-medium rounded-lg border transition-colors hover:bg-gray-50"
+                        style="border-color: #E5E2D9; color: #8B4513;">
+                        Hủy
+                    </button>
+                    <form id="hardDeleteForm" method="POST" class="inline">
+                        <button type="submit"
+                            class="px-4 py-2 text-sm font-medium text-white rounded-lg bg-red-600 transition-colors hover:bg-red-700">
+                            Xác nhận xóa
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     function openModal(id) {
         document.getElementById(id).classList.remove('hidden');
@@ -306,19 +360,22 @@
         document.body.style.overflow = '';
     }
 
-    function editEmployee(id, fullName, role) {
+    function editEmployee(id, fullName, role, phone) {
         document.getElementById('editEmployeeForm').action = '/admin/employees/' + id + '/update';
         document.getElementById('editEmpName').value = fullName;
         document.getElementById('editEmpRole').value = role;
+        document.getElementById('editEmpPhone').value = phone || '';
         openModal('editEmployeeModal');
     }
 
+    // Đặt lại mật khẩu
     function resetPassword(id, fullName) {
         document.getElementById('resetPwdForm').action = '/admin/employees/' + id + '/reset-password';
         document.getElementById('resetPwdName').textContent = fullName;
         openModal('resetPwdDialog');
     }
 
+    // Khóa / mở khóa
     function confirmToggle(id, name, actionName) {
         document.getElementById('deleteName').textContent = name;
         document.getElementById('toggleActionName').textContent = actionName;
@@ -329,6 +386,13 @@
             document.getElementById('toggleBtn').className = 'px-4 py-2 text-sm font-medium text-white rounded-lg bg-red-600 transition-colors hover:bg-red-700';
         }
         openModal('deleteDialog');
+    }
+
+    // Xóa cứng nhân viên
+    function confirmDelete(id, name) {
+        document.getElementById('hardDeleteName').textContent = name;
+        document.getElementById('hardDeleteForm').action = '/admin/employees/' + id + '/delete';
+        openModal('hardDeleteDialog');
     }
 
     document.addEventListener('DOMContentLoaded', function () {

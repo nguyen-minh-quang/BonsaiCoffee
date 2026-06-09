@@ -851,12 +851,18 @@
     // ===== PRINT =====
     window.printTempBill = function() {
         if (!currentOrder) return;
-        window.open(`/cashier/invoice/${currentOrder.id}?temp=1`, '_blank');
+        if (document.activeElement) document.activeElement.blur();
+        setTimeout(() => {
+            window.open(`/cashier/invoice/${currentOrder.id}?temp=1`, '_blank');
+        }, 300);
     };
 
     window.printKitchenTicket = function() {
         if (!currentOrder) return;
-        window.open(`/cashier/kitchen-ticket/${currentOrder.id}`, '_blank');
+        if (document.activeElement) document.activeElement.blur();
+        setTimeout(() => {
+            window.open(`/cashier/kitchen-ticket/${currentOrder.id}`, '_blank');
+        }, 300);
     };
 
     // ===== MODAL =====

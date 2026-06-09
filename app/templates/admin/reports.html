@@ -225,6 +225,10 @@
                                 {% endif %}
                             </td>
                             <td class="px-4 py-3 text-center">
+                                <a href="/cashier/shift-report/{{ shift.id }}" target="_blank" title="Xem chi tiết ca"
+                                   class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-900 transition-colors mr-1">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </a>
                                 <a href="/cashier/shift-report/{{ shift.id }}?print=1" target="_blank" title="In báo cáo ca"
                                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900 transition-colors">
                                     <i data-lucide="printer" class="w-4 h-4"></i>

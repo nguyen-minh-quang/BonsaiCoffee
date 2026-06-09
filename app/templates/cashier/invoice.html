@@ -199,7 +199,12 @@
             {% set subtotal = item.unit_price * item.quantity %}
             {% set ns.total = ns.total + subtotal %}
             <tr>
-                <td>{{ item.product.name }}</td>
+                <td>
+                    {{ item.product.name }}
+                    {% if item.note %}
+                    <div style="font-size: 11px; font-style: italic; color: #555;">- {{ item.note }}</div>
+                    {% endif %}
+                </td>
                 <td>{{ item.quantity }}</td>
                 <td>{{ '{:,.0f}'.format(item.unit_price) }}</td>
                 <td>{{ '{:,.0f}'.format(subtotal) }}</td>

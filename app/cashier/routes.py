@@ -1,8 +1,8 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from functools import wraps
 
-from flask import Blueprint, abort, jsonify, render_template, redirect, request, url_for
+from flask import Blueprint, abort, flash, jsonify, render_template, redirect, request, url_for
 from flask_login import current_user, login_required
 
 from app import db
@@ -90,6 +90,12 @@ def index():
 @cashier_bp.route("/shift/open", methods=["POST"])
 @cashier_required
 def shift_open():
+    # Kiểm tra xem toàn hệ thống có ca nào đang mở chưa đóng không
+    active_shift = Shift.query.filter_by(status="open").first()
+    if active_shift:
+        flash(f"Lỗi: Ca làm việc cũ của nhân viên '{active_shift.user.full_name}' chưa được đóng! Yêu cầu đăng nhập lại tài khoản đó để đóng ca trước khi mở ca mới.", "error")
+        return redirect(url_for("cashier.index"))
+
     opening_amount = request.form.get("starting_cash", 0, type=float)
     shift = Shift(
         user_id=current_user.id,
@@ -677,7 +683,7 @@ def api_transactions():
             "type": t.type,
             "amount": float(t.amount),
             "description": t.description,
-            "created_at": t.created_at.strftime("%H:%M %d/%m") if t.created_at else "",
+            "created_at": (t.created_at + timedelta(hours=7)).strftime("%H:%M %d/%m") if t.created_at else "",
         }
         for t in txs
     ]

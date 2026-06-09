@@ -219,6 +219,11 @@ def product_create():
         flash('Giá sản phẩm không hợp lệ.', 'error')
         return redirect(url_for('admin.products'))
 
+    existing_product = Product.query.filter_by(name=name).first()
+    if existing_product:
+        flash('Tên sản phẩm đã tồn tại.', 'error')
+        return redirect(url_for('admin.products'))
+
     product = Product(
         name=name,
         category_id=category_id,
@@ -254,6 +259,11 @@ def product_update(id):
 
     if price is None or price < 0:
         flash('Giá sản phẩm không hợp lệ.', 'error')
+        return redirect(url_for('admin.products'))
+
+    existing_product = Product.query.filter(Product.name == name, Product.id != id).first()
+    if existing_product:
+        flash('Tên sản phẩm đã tồn tại.', 'error')
         return redirect(url_for('admin.products'))
 
     product.name = name
@@ -538,6 +548,28 @@ def employee_toggle(id):
     db.session.commit()
     status = "mở khóa" if user.is_active else "vô hiệu hóa"
     flash(f'Đã {status} nhân viên.', 'success')
+    return redirect(url_for('admin.employees'))
+
+
+@admin_bp.route('/employees/<int:id>/delete', methods=['POST'])
+@admin_required
+def employee_delete(id):
+    """Xóa cứng nhân viên nếu chưa phát sinh dữ liệu (ca làm, hóa đơn)."""
+    from sqlalchemy.exc import IntegrityError
+    user = User.query.get_or_404(id)
+
+    if user.id == current_user.id:
+        flash('Không thể tự xóa chính mình.', 'error')
+        return redirect(url_for('admin.employees'))
+
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        flash('Đã xóa vĩnh viễn nhân viên thành công.', 'success')
+    except IntegrityError:
+        db.session.rollback()
+        flash('LỖI: Nhân viên này đã từng mở ca làm việc, thực hiện giao dịch hoặc lập hóa đơn! Để không làm hỏng báo cáo cũ, bạn không thể xóa vĩnh viễn. Vui lòng bấm chọn "Khóa" để vô hiệu hóa tài khoản này thay vì xóa!', 'error')
+
     return redirect(url_for('admin.employees'))
 
 

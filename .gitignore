@@ -10,6 +10,7 @@ slides
 # --- Ngoại lệ: giữ lại ---
 !taikhoan.txt
 !requirements.txt
+!README.md
 
 # --- Dependencies ---
 node_modules/
@@ -30,6 +31,7 @@ build/
 # --- IDE & Editor ---
 .idea/
 .vscode/
+.vs/
 *.swp
 *.swo
 *~
