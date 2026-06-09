@@ -1,6 +1,6 @@
-# BrewManager
+# Bonsai Coffee
 
-> Ung dung Python BrewManager voi backend manh me.
+> Ứng dựng quản lý quán Bonsai coffee với backend mạnh mẽ.
 
 ## Tinh nang chinh
 
@@ -10,3 +10,7 @@
 
 - **Backend**: Flask
 - **Khac**: Python
+
+## Cai dat
+- install requirements
+- install cloudinary
