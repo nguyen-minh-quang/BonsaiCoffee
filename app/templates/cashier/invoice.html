@@ -176,8 +176,12 @@
             <span>{{ order.table.name if order.table else '--' }}</span>
         </div>
         <div class="info-row">
+            <span>Phục vụ:</span>
+            <span>{{ order.user.full_name if (order.user and order.user.role == 'waiter') else 'Tại quầy' }}</span>
+        </div>
+        <div class="info-row">
             <span>Thu ngân:</span>
-            <span>{{ order.user.full_name if order.user else '--' }}</span>
+            <span>{{ order.shift.user.full_name if (order.shift and order.shift.user) else '--' }}</span>
         </div>
     </div>
 

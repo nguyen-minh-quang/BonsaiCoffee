@@ -1,7 +1,7 @@
 from functools import wraps
 from datetime import datetime, date, timedelta, timezone
 
-from flask import Blueprint, render_template, redirect, url_for, request, flash, abort
+from flask import Blueprint, render_template, redirect, url_for, request, flash, abort, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy import func
 
@@ -84,6 +84,67 @@ def dashboard():
         chart_data=chart_data,
         top_products=top_products,
     )
+
+
+@admin_bp.route('/api/stats')
+@admin_required
+def dashboard_stats():
+    """API trả về các chỉ số thống kê của dashboard để tự động cập nhật."""
+    total_products = Product.query.count()
+    total_categories = Category.query.filter_by(is_active=True).count()
+    total_tables = Table.query.count()
+    total_employees = User.query.filter_by(is_active=True).count()
+
+    # Doanh thu hôm nay
+    today = date.today()
+    today_orders = Order.query.filter(
+        func.date(Order.paid_at) == today,
+        Order.status == 'completed'
+    ).all()
+    today_revenue = sum(float(o.total_amount) for o in today_orders)
+
+    # Biểu đồ 7 ngày
+    chart_labels = []
+    chart_data = []
+    for i in range(6, -1, -1):
+        d = today - timedelta(days=i)
+        chart_labels.append(d.strftime('%d/%m'))
+        day_orders = Order.query.filter(
+            func.date(Order.paid_at) == d,
+            Order.status == 'completed'
+        ).all()
+        chart_data.append(sum(float(o.total_amount) for o in day_orders))
+
+    # Top 5 sản phẩm tuần
+    week_ago = datetime.now(timezone.utc) - timedelta(days=7)
+    top_products = (
+        db.session.query(
+            Product.name,
+            func.sum(OrderItem.quantity).label('total_qty'),
+        )
+        .join(OrderItem, OrderItem.product_id == Product.id)
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(Order.paid_at >= week_ago, Order.status == 'completed')
+        .group_by(Product.id, Product.name)
+        .order_by(func.sum(OrderItem.quantity).desc())
+        .limit(5)
+        .all()
+    )
+
+    return jsonify({
+        'success': True,
+        'data': {
+            'total_products': total_products,
+            'total_categories': total_categories,
+            'total_tables': total_tables,
+            'total_employees': total_employees,
+            'today_revenue': today_revenue,
+            'today_orders': len(today_orders),
+            'chart_labels': chart_labels,
+            'chart_data': chart_data,
+            'top_products': [{'name': name, 'total_qty': int(qty)} for name, qty in top_products]
+        }
+    })
 
 
 # ===========================================================================
